@@ -89,6 +89,8 @@ const (
 	CFTARGET SegmentType = "cftarget"
 	// CMD writes the output of a shell command
 	CMD SegmentType = "command"
+	// Codefresh outputs the Codefresh CLIs current context
+	CODEFRESH SegmentType = "codefresh"
 	// CRYSTAL writes the active crystal version
 	CRYSTAL SegmentType = "crystal"
 	// DART writes the active dart version
@@ -254,6 +256,7 @@ func (segment *Segment) mapSegmentWithWriter(env environment.Environment) error 
 		CF:            &segments.Cf{},
 		CFTARGET:      &segments.CfTarget{},
 		CMD:           &segments.Cmd{},
+		CODEFRESH:     &segments.Codefresh{},
 		CRYSTAL:       &segments.Crystal{},
 		DART:          &segments.Dart{},
 		DOTNET:        &segments.Dotnet{},
