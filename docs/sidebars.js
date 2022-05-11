@@ -62,6 +62,7 @@ module.exports = {
         "segments/crystal",
         "segments/cf",
         "segments/cftarget",
+        "segments/codefresh",
         "segments/dart",
         "segments/dotnet",
         "segments/executiontime",
