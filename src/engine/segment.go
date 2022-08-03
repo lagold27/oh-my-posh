@@ -141,6 +141,8 @@ const (
 	POSHGIT SegmentType = "poshgit"
 	// Project version
 	PROJECT SegmentType = "project"
+	// Pulumi current environment
+	PULUMI SegmentType = "pulumi"
 	// PYTHON writes the virtual env name
 	PYTHON SegmentType = "python"
 	// R version
@@ -282,6 +284,7 @@ func (segment *Segment) mapSegmentWithWriter(env environment.Environment) error 
 		PLASTIC:       &segments.Plastic{},
 		POSHGIT:       &segments.PoshGit{},
 		PROJECT:       &segments.Project{},
+		PULUMI:        &segments.Pulumi{},
 		PYTHON:        &segments.Python{},
 		R:             &segments.R{},
 		ROOT:          &segments.Root{},
