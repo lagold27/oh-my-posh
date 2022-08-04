@@ -12,10 +12,10 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-const testCodefreshAllInfoTemplate = "{{.Context}} "
+const testCodefreshAllInfoTemplate = " {{.Context}} "
 
 func TestCodefreshSegment(t *testing.T) {
-	standardTemplate := "{{.Context}} "
+	standardTemplate := " {{.Context}} "
 	lsep := string(filepath.ListSeparator)
 
 	cases := []struct {
@@ -143,20 +143,20 @@ func TestCodefreshSegment(t *testing.T) {
 	}
 }
 
-var testCFConfig = string{
+var testCFConfig = map[string]string{
 	filepath.Join("testhome", ".cfconfig"): `
 contexts:
 	prod:
 	  type: APIKey
 	  name: prod
-	  url: 'https://g.codefresh.io'
+	  url: https://g.codefresh.io
 	  token: 54321
 	  beta: false
 	  onPrem: false
 	dev:
 	  type: APIKey
 	  name: dev
-	  url: 'https://g.codefresh.io'
+	  url: https://g.codefresh.io
 	  token: 12345
 	  beta: false
 	  onPrem: false
