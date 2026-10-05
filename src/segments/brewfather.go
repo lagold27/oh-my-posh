@@ -7,53 +7,47 @@ import (
 	"fmt"
 	"math"
 	"net/http"
-	"oh-my-posh/environment"
-	"oh-my-posh/properties"
 	"sort"
 	"time"
+
+	"github.com/jandedobbeleer/oh-my-posh/src/segments/options"
+	"github.com/jandedobbeleer/oh-my-posh/src/template"
 )
 
-// segment struct, makes templating easier
 type Brewfather struct {
-	props properties.Properties
-	env   environment.Environment
+	Base
 
+	DaysBottledOrFermented *uint
+	TemperatureTrendIcon   template.Markup
+	StatusIcon             template.Markup
+	DayIcon                template.Markup
+	URL                    string
 	Batch
-	TemperatureTrendIcon string
-	StatusIcon           string
-	DayIcon              string // populated from day_icon for use in template
-
-	ReadingAge             int // age in hours of the most recent reading included in the batch, -1 if none
-	DaysFermenting         uint
-	DaysBottled            uint
-	DaysBottledOrFermented *uint // help avoid chronic template logic - code will point this to one of above or be nil depending on status
-
-	URL string // URL of batch page to open if hyperlink enabled on the segment and URL formatting used in template: [name](link)
+	ReadingAge     int
+	DaysFermenting uint
+	DaysBottled    uint
 }
 
 const (
-	BFUserID  properties.Property = "user_id"
-	BFAPIKey  properties.Property = "api_key"
-	BFBatchID properties.Property = "batch_id"
+	BFUserID  options.Option = "user_id"
+	BFBatchID options.Option = "batch_id"
 
-	BFDoubleUpIcon      properties.Property = "doubleup_icon"
-	BFSingleUpIcon      properties.Property = "singleup_icon"
-	BFFortyFiveUpIcon   properties.Property = "fortyfiveup_icon"
-	BFFlatIcon          properties.Property = "flat_icon"
-	BFFortyFiveDownIcon properties.Property = "fortyfivedown_icon"
-	BFSingleDownIcon    properties.Property = "singledown_icon"
-	BFDoubleDownIcon    properties.Property = "doubledown_icon"
+	BFDoubleUpIcon      options.Option = "doubleup_icon"
+	BFSingleUpIcon      options.Option = "singleup_icon"
+	BFFortyFiveUpIcon   options.Option = "fortyfiveup_icon"
+	BFFlatIcon          options.Option = "flat_icon"
+	BFFortyFiveDownIcon options.Option = "fortyfivedown_icon"
+	BFSingleDownIcon    options.Option = "singledown_icon"
+	BFDoubleDownIcon    options.Option = "doubledown_icon"
 
-	BFPlanningStatusIcon     properties.Property = "planning_status_icon"
-	BFBrewingStatusIcon      properties.Property = "brewing_status_icon"
-	BFFermentingStatusIcon   properties.Property = "fermenting_status_icon"
-	BFConditioningStatusIcon properties.Property = "conditioning_status_icon"
-	BFCompletedStatusIcon    properties.Property = "completed_status_icon"
-	BFArchivedStatusIcon     properties.Property = "archived_status_icon"
+	BFPlanningStatusIcon     options.Option = "planning_status_icon"
+	BFBrewingStatusIcon      options.Option = "brewing_status_icon"
+	BFFermentingStatusIcon   options.Option = "fermenting_status_icon"
+	BFConditioningStatusIcon options.Option = "conditioning_status_icon"
+	BFCompletedStatusIcon    options.Option = "completed_status_icon"
+	BFArchivedStatusIcon     options.Option = "archived_status_icon"
 
-	BFDayIcon properties.Property = "day_icon"
-
-	BFCacheTimeout properties.Property = "cache_timeout"
+	BFDayIcon options.Option = "day_icon"
 
 	BFStatusPlanning     string = "Planning"
 	BFStatusBrewing      string = "Brewing"
@@ -66,38 +60,32 @@ const (
 // Returned from https://api.brewfather.app/v1/batches/batch_id/readings
 type BatchReading struct {
 	Comment     string  `json:"comment"`
-	Gravity     float64 `json:"sg"`
 	DeviceType  string  `json:"type"`
 	DeviceID    string  `json:"id"`
-	Temperature float64 `json:"temp"`      // celsius - need to add F conversion
-	Timepoint   int64   `json:"timepoint"` // << check what these are...
-	Time        int64   `json:"time"`      // <<
+	Gravity     float64 `json:"sg"`
+	Temperature float64 `json:"temp"`
+	Timepoint   int64   `json:"timepoint"`
+	Time        int64   `json:"time"`
 }
 type Batch struct {
-	// Json tagged values returned from https://api.brewfather.app/v1/batches/batch_id
-	Status      string `json:"status"`
-	BatchName   string `json:"name"`
-	BatchNumber int    `json:"batchNo"`
-	Recipe      struct {
+	Reading   *BatchReading
+	Status    string `json:"status"`
+	BatchName string `json:"name"`
+	Recipe    struct {
 		Name string `json:"name"`
 	} `json:"recipe"`
-	BrewDate         int64 `json:"brewDate"`
-	FermentStartDate int64 `json:"fermentationStartDate"`
-	BottlingDate     int64 `json:"bottlingDate"`
-
-	MeasuredOg  float64 `json:"measuredOg"`
-	MeasuredFg  float64 `json:"measuredFg"`
-	MeasuredAbv float64 `json:"measuredAbv"`
-
-	// copy of the latest BatchReading in here.
-	Reading *BatchReading
-
-	// Calculated values we need to cache because they require the rest query to reproduce
-	TemperatureTrend float64 // diff between this and last, short term trend
+	BatchNumber      int     `json:"batchNo"`
+	BrewDate         int64   `json:"brewDate"`
+	FermentStartDate int64   `json:"fermentationStartDate"`
+	BottlingDate     int64   `json:"bottlingDate"`
+	MeasuredOg       float64 `json:"measuredOg"`
+	MeasuredFg       float64 `json:"measuredFg"`
+	MeasuredAbv      float64 `json:"measuredAbv"`
+	TemperatureTrend float64
 }
 
 func (bf *Brewfather) Template() string {
-	return " {{ .StatusIcon }} {{ if .DaysBottledOrFermented }}{{ .DaysBottledOrFermented }}{{ .DayIcon }} {{ end }}{{ url .Recipe.Name .URL }} {{ printf \"%.1f\" .MeasuredAbv }}%{{ if and (.Reading) (eq .Status \"Fermenting\") }} {{ printf \"%.3f\" .Reading.Gravity }} {{ .Reading.Temperature }}\u00b0 {{ .TemperatureTrendIcon }}{{ end }} " // nolint:lll
+	return " {{ .StatusIcon }} {{ if .DaysBottledOrFermented }}{{ .DaysBottledOrFermented }}{{ .DayIcon }} {{ end }}{{ url .Recipe.Name .URL }} {{ printf \"%.1f\" .MeasuredAbv }}%{{ if and (.Reading) (eq .Status \"Fermenting\") }} {{ printf \"%.3f\" .Reading.Gravity }} {{ .Reading.Temperature }}\u00b0 {{ .TemperatureTrendIcon }}{{ end }} " //nolint:lll
 }
 
 func (bf *Brewfather) Enabled() bool {
@@ -107,8 +95,8 @@ func (bf *Brewfather) Enabled() bool {
 	}
 	bf.Batch = *data
 
-	if bf.Batch.Reading != nil {
-		readingDate := time.UnixMilli(bf.Batch.Reading.Time)
+	if bf.Reading != nil {
+		readingDate := time.UnixMilli(bf.Reading.Time)
 		bf.ReadingAge = int(time.Since(readingDate).Hours())
 	} else {
 		bf.ReadingAge = -1
@@ -117,10 +105,10 @@ func (bf *Brewfather) Enabled() bool {
 	bf.TemperatureTrendIcon = bf.getTrendIcon(bf.TemperatureTrend)
 	bf.StatusIcon = bf.getBatchStatusIcon(data.Status)
 
-	fermStartDate := time.UnixMilli(bf.Batch.FermentStartDate)
-	bottlingDate := time.UnixMilli(bf.Batch.BottlingDate)
+	fermStartDate := time.UnixMilli(bf.FermentStartDate)
+	bottlingDate := time.UnixMilli(bf.BottlingDate)
 
-	switch bf.Batch.Status {
+	switch bf.Status {
 	case BFStatusFermenting:
 		// in the fermenter now, so relative to today.
 		bf.DaysFermenting = uint(time.Since(fermStartDate).Hours() / 24)
@@ -137,105 +125,81 @@ func (bf *Brewfather) Enabled() bool {
 	}
 
 	// URL property set to weblink to the full batch page
-	batchID := bf.props.GetString(BFBatchID, "")
+	batchID := bf.options.String(BFBatchID, "")
 	if len(batchID) > 0 {
 		bf.URL = fmt.Sprintf("https://web.brewfather.app/tabs/batches/batch/%s", batchID)
 	}
 
-	bf.DayIcon = bf.props.GetString(BFDayIcon, "d")
+	bf.DayIcon = bf.options.Markup(BFDayIcon, "d")
 
 	return true
 }
 
-func (bf *Brewfather) getTrendIcon(trend float64) string {
+func (bf *Brewfather) getTrendIcon(trend float64) template.Markup {
 	// Not a fan of this logic - wondering if Go lets us do something cleaner...
 	if trend >= 0 {
 		if trend > 4 {
-			return bf.props.GetString(BFDoubleUpIcon, "↑↑")
+			return bf.options.Markup(BFDoubleUpIcon, "↑↑")
 		}
 
 		if trend > 2 {
-			return bf.props.GetString(BFSingleUpIcon, "↑")
+			return bf.options.Markup(BFSingleUpIcon, "↑")
 		}
 
 		if trend > 0.5 {
-			return bf.props.GetString(BFFortyFiveUpIcon, "↗")
+			return bf.options.Markup(BFFortyFiveUpIcon, "↗")
 		}
 
-		return bf.props.GetString(BFFlatIcon, "→")
+		return bf.options.Markup(BFFlatIcon, "→")
 	}
 
 	if trend < -4 {
-		return bf.props.GetString(BFDoubleDownIcon, "↓↓")
+		return bf.options.Markup(BFDoubleDownIcon, "↓↓")
 	}
 
 	if trend < -2 {
-		return bf.props.GetString(BFSingleDownIcon, "↓")
+		return bf.options.Markup(BFSingleDownIcon, "↓")
 	}
 
 	if trend < -0.5 {
-		return bf.props.GetString(BFFortyFiveDownIcon, "↘")
+		return bf.options.Markup(BFFortyFiveDownIcon, "↘")
 	}
 
-	return bf.props.GetString(BFFlatIcon, "→")
+	return bf.options.Markup(BFFlatIcon, "→")
 }
 
-func (bf *Brewfather) getBatchStatusIcon(batchStatus string) string {
+func (bf *Brewfather) getBatchStatusIcon(batchStatus string) template.Markup {
 	switch batchStatus {
 	case BFStatusPlanning:
-		return bf.props.GetString(BFPlanningStatusIcon, "\uF8EA")
+		return bf.options.Markup(BFPlanningStatusIcon, "\uF8EA")
 	case BFStatusBrewing:
-		return bf.props.GetString(BFBrewingStatusIcon, "\uF7DE")
+		return bf.options.Markup(BFBrewingStatusIcon, "\uF7DE")
 	case BFStatusFermenting:
-		return bf.props.GetString(BFFermentingStatusIcon, "\uF499")
+		return bf.options.Markup(BFFermentingStatusIcon, "\uF499")
 	case BFStatusConditioning:
-		return bf.props.GetString(BFConditioningStatusIcon, "\uE372")
+		return bf.options.Markup(BFConditioningStatusIcon, "\uE372")
 	case BFStatusCompleted:
-		return bf.props.GetString(BFCompletedStatusIcon, "\uF7A5")
+		return bf.options.Markup(BFCompletedStatusIcon, "\uF7A5")
 	case BFStatusArchived:
-		return bf.props.GetString(BFArchivedStatusIcon, "\uF187")
+		return bf.options.Markup(BFArchivedStatusIcon, "\uF187")
 	default:
 		return ""
 	}
 }
 
 func (bf *Brewfather) getResult() (*Batch, error) {
-	getFromCache := func(key string) (*Batch, error) {
-		val, found := bf.env.Cache().Get(key)
-		// we got something from the cache
-		if found {
-			var result Batch
-			err := json.Unmarshal([]byte(val), &result)
-			if err == nil {
-				return &result, nil
-			}
-		}
-		return nil, errors.New("no data in cache")
-	}
-
-	putToCache := func(key string, batch *Batch, cacheTimeout int) error {
-		cacheJSON, err := json.Marshal(batch)
-		if err != nil {
-			return err
-		}
-
-		bf.env.Cache().Set(key, string(cacheJSON), cacheTimeout)
-
-		return nil
-	}
-
-	userID := bf.props.GetString(BFUserID, "")
-	if len(userID) == 0 {
+	userID := bf.options.Template(BFUserID, "", bf)
+	if userID == "" {
 		return nil, errors.New("missing Brewfather user id (user_id)")
 	}
 
-	apiKey := bf.props.GetString(BFAPIKey, "")
-	if len(apiKey) == 0 {
+	apiKey := bf.options.Template(APIKey, "", bf)
+	if apiKey == "" {
 		return nil, errors.New("missing Brewfather api key (api_key)")
 	}
 
-	batchID := bf.props.GetString(BFBatchID, "")
-	if len(batchID) == 0 {
+	batchID := bf.options.Template(BFBatchID, "", bf)
+	if batchID == "" {
 		return nil, errors.New("missing Brewfather batch id (batch_id)")
 	}
 
@@ -245,20 +209,14 @@ func (bf *Brewfather) getResult() (*Batch, error) {
 	batchURL := fmt.Sprintf("https://api.brewfather.app/v1/batches/%s", batchID)
 	batchReadingsURL := fmt.Sprintf("https://api.brewfather.app/v1/batches/%s/readings", batchID)
 
-	httpTimeout := bf.props.GetInt(HTTPTimeout, DefaultHTTPTimeout)
-	cacheTimeout := bf.props.GetInt(BFCacheTimeout, 5)
-
-	if cacheTimeout > 0 {
-		if data, err := getFromCache(batchURL); err == nil {
-			return data, nil
-		}
-	}
+	httpTimeout := bf.options.Int(options.HTTPTimeout, options.DefaultHTTPTimeout)
 
 	// batch
 	addAuthHeader := func(request *http.Request) {
 		request.Header.Add("authorization", authHeader)
 	}
-	body, err := bf.env.HTTPRequest(batchURL, httpTimeout, addAuthHeader)
+
+	body, err := bf.env.HTTPRequest(batchURL, nil, httpTimeout, addAuthHeader)
 	if err != nil {
 		return nil, err
 	}
@@ -270,7 +228,7 @@ func (bf *Brewfather) getResult() (*Batch, error) {
 	}
 
 	// readings
-	body, err = bf.env.HTTPRequest(batchReadingsURL, httpTimeout, addAuthHeader)
+	body, err = bf.env.HTTPRequest(batchReadingsURL, nil, httpTimeout, addAuthHeader)
 	if err != nil {
 		return nil, err
 	}
@@ -296,14 +254,9 @@ func (bf *Brewfather) getResult() (*Batch, error) {
 		}
 	}
 
-	if cacheTimeout > 0 {
-		_ = putToCache(batchURL, &batch, cacheTimeout)
-	}
-
 	return &batch, nil
 }
 
-// Unit conversion functions available to template.
 func (bf *Brewfather) DegCToF(degreesC float64) float64 {
 	return math.Round(10*((degreesC*1.8)+32)) / 10 // 1 decimal place
 }
@@ -320,9 +273,4 @@ func (bf *Brewfather) SGToBrix(sg float64) float64 {
 func (bf *Brewfather) SGToPlato(sg float64) float64 {
 	// from https://en.wikipedia.org/wiki/Brix#Specific_gravity_2
 	return math.Round(100*((135.997*sg*sg*sg)-(630.272*sg*sg)+(1111.14*sg)-616.868)) / 100 // 2 decimal places
-}
-
-func (bf *Brewfather) Init(props properties.Properties, env environment.Environment) {
-	bf.props = props
-	bf.env = env
 }

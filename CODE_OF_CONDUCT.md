@@ -59,8 +59,8 @@ representative at an online or offline event.
 ## Enforcement
 
 Instances of abusive, harassing, or otherwise unacceptable behavior may be
-reported to the community leaders responsible for enforcement at
-abuse@ohmyposh.dev.
+reported to the community leaders responsible for enforcement by reaching out
+via [email](mailto:abuse@ohmyposh.dev).
 All complaints will be reviewed and investigated promptly and fairly.
 
 All community leaders are obligated to respect the privacy and security of the
@@ -115,13 +115,13 @@ the community.
 ## Attribution
 
 This Code of Conduct is adapted from the [Contributor Covenant][homepage],
-version 2.0, available [here][version-2].
+version 2.0, available [in the documentation][version-2].
 
 Community Impact Guidelines were inspired by [Mozilla's code of conduct
 enforcement ladder][moz-div].
 
 For answers to common questions about this code of conduct, see the [FAQ][faq].
-Translations are available [here][translations].
+Translations are available [in the documentation][translations].
 
 [homepage]: https://www.contributor-covenant.org
 [moz-div]: https://github.com/mozilla/diversity

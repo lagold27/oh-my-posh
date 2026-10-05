@@ -1,23 +1,37 @@
 package segments
 
 import (
-	"oh-my-posh/environment"
-	"oh-my-posh/properties"
 	"path/filepath"
 
-	"gopkg.in/yaml.v3"
+	"github.com/jandedobbeleer/oh-my-posh/src/segments/options"
+	"github.com/jandedobbeleer/oh-my-posh/src/template"
+
+	yaml "go.yaml.in/yaml/v3"
 )
 
 // Whether to use kubectl or read kubeconfig ourselves
-const ParseKubeConfig properties.Property = "parse_kubeconfig"
+const (
+	ParseKubeConfig options.Option = "parse_kubeconfig"
+	ContextAliases  options.Option = "context_aliases"
+	ClusterAliases  options.Option = "cluster_aliases"
+)
 
 type Kubectl struct {
-	props properties.Properties
-	env   environment.Environment
+	Base
 
-	Context string
+	// Context is markup: a context_aliases value is user configuration and
+	// may carry <...> anchors, while the kubeconfig-sourced context is escaped.
+	Context template.Markup
+	// Cluster is markup: a cluster_aliases value is user configuration and
+	// may carry <...> anchors, while the kubeconfig-sourced cluster is escaped.
+	Cluster   template.Markup
+	User      string
+	Namespace string
 
-	KubeContext
+	// context and cluster hold the raw, unaliased names used for alias lookups.
+	context string
+	cluster string
+	dirty   bool
 }
 
 type KubeConfig struct {
@@ -38,16 +52,13 @@ func (k *Kubectl) Template() string {
 	return " {{ .Context }}{{ if .Namespace }} :: {{ .Namespace }}{{ end }} "
 }
 
-func (k *Kubectl) Init(props properties.Properties, env environment.Environment) {
-	k.props = props
-	k.env = env
-}
-
 func (k *Kubectl) Enabled() bool {
-	parseKubeConfig := k.props.GetBool(ParseKubeConfig, false)
+	parseKubeConfig := k.options.Bool(ParseKubeConfig, true)
+
 	if parseKubeConfig {
 		return k.doParseKubeConfig()
 	}
+
 	return k.doCallKubectl()
 }
 
@@ -58,10 +69,12 @@ func (k *Kubectl) doParseKubeConfig() bool {
 	if len(kubeconfigs) == 0 {
 		kubeconfigs = []string{filepath.Join(k.env.Home(), ".kube/config")}
 	}
+
 	contexts := make(map[string]*KubeContext)
-	k.Context = ""
+	k.context = ""
+
 	for _, kubeconfig := range kubeconfigs {
-		if len(kubeconfig) == 0 {
+		if kubeconfig == "" {
 			continue
 		}
 
@@ -79,21 +92,29 @@ func (k *Kubectl) doParseKubeConfig() bool {
 			}
 		}
 
-		if len(k.Context) == 0 {
-			k.Context = config.CurrentContext
+		if k.context == "" {
+			k.context = config.CurrentContext
 		}
 
-		context, exists := contexts[k.Context]
+		context, exists := contexts[k.context]
 		if !exists {
 			continue
 		}
+
 		if context != nil {
-			k.KubeContext = *context
+			k.cluster = context.Cluster
+			k.User = context.User
+			k.Namespace = context.Namespace
 		}
+
+		k.SetContextAlias()
+		k.SetClusterAlias()
+		k.dirty = true
+
 		return true
 	}
 
-	displayError := k.props.GetBool(properties.DisplayError, false)
+	displayError := k.options.Bool(options.DisplayError, false)
 	if !displayError {
 		return false
 	}
@@ -106,12 +127,14 @@ func (k *Kubectl) doCallKubectl() bool {
 	if !k.env.HasCommand(cmd) {
 		return false
 	}
+
 	result, err := k.env.RunCommand(cmd, "config", "view", "--output", "yaml", "--minify")
-	displayError := k.props.GetBool(properties.DisplayError, false)
+	displayError := k.options.Bool(options.DisplayError, false)
 	if err != nil && displayError {
 		k.setError("KUBECTL ERR")
 		return true
 	}
+
 	if err != nil {
 		return false
 	}
@@ -121,18 +144,48 @@ func (k *Kubectl) doCallKubectl() bool {
 	if err != nil {
 		return false
 	}
-	k.Context = config.CurrentContext
+
+	k.context = config.CurrentContext
+	k.SetContextAlias()
+	k.dirty = true
+
 	if len(config.Contexts) > 0 {
-		k.KubeContext = *config.Contexts[0].Context
+		context := config.Contexts[0].Context
+		k.cluster = context.Cluster
+		k.User = context.User
+		k.Namespace = context.Namespace
+		k.SetClusterAlias()
 	}
+
 	return true
 }
 
 func (k *Kubectl) setError(message string) {
-	if len(k.Context) == 0 {
-		k.Context = message
+	if k.context == "" {
+		k.context = message
+		k.Context = template.RawMarkup(message)
 	}
+
 	k.Namespace = message
 	k.User = message
-	k.Cluster = message
+	k.cluster = message
+	k.Cluster = template.RawMarkup(message)
+}
+
+func (k *Kubectl) SetContextAlias() {
+	k.Context = template.EscapeMarkup(k.context)
+
+	aliases := k.options.KeyValueMap(ContextAliases, map[string]string{})
+	if alias, exists := aliases[k.context]; exists {
+		k.Context = template.RawMarkup(alias)
+	}
+}
+
+func (k *Kubectl) SetClusterAlias() {
+	k.Cluster = template.EscapeMarkup(k.cluster)
+
+	aliases := k.options.KeyValueMap(ClusterAliases, map[string]string{})
+	if alias, exists := aliases[k.cluster]; exists {
+		k.Cluster = template.RawMarkup(alias)
+	}
 }

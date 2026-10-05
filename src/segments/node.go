@@ -2,82 +2,169 @@ package segments
 
 import (
 	"fmt"
-	"oh-my-posh/environment"
-	"oh-my-posh/properties"
-	"oh-my-posh/regex"
+	"strings"
+
+	"github.com/jandedobbeleer/oh-my-posh/src/regex"
+	"github.com/jandedobbeleer/oh-my-posh/src/segments/options"
+	"github.com/jandedobbeleer/oh-my-posh/src/template"
 )
 
 type Node struct {
-	language
+	PackageManagerIcon template.Markup
+	PackageManagerName string
 
-	PackageManagerIcon string
+	Language
 }
 
 const (
-	// YarnIcon illustrates Yarn is used
-	YarnIcon properties.Property = "yarn_icon"
-	// NPMIcon illustrates NPM is used
-	NPMIcon properties.Property = "npm_icon"
-	// FetchPackageManager shows if NPM or Yarn is used
-	FetchPackageManager properties.Property = "fetch_package_manager"
+	PnpmIcon            options.Option = "pnpm_icon"
+	YarnIcon            options.Option = "yarn_icon"
+	NPMIcon             options.Option = "npm_icon"
+	BunIcon             options.Option = "bun_icon"
+	FetchPackageManager options.Option = "fetch_package_manager"
 )
 
 func (n *Node) Template() string {
 	return " {{ if .PackageManagerIcon }}{{ .PackageManagerIcon }} {{ end }}{{ .Full }} "
 }
 
-func (n *Node) Init(props properties.Properties, env environment.Environment) {
-	n.language = language{
-		env:        env,
-		props:      props,
-		extensions: []string{"*.js", "*.ts", "package.json", ".nvmrc", "pnpm-workspace.yaml", ".pnpmfile.cjs", ".npmrc", ".vue"},
-		commands: []*cmd{
-			{
-				executable: "node",
-				args:       []string{"--version"},
-				regex:      `(?:v(?P<version>((?P<major>[0-9]+).(?P<minor>[0-9]+).(?P<patch>[0-9]+))))`,
-			},
-		},
-		versionURLTemplate: "https://github.com/nodejs/node/blob/master/doc/changelogs/CHANGELOG_V{{ .Major }}.md#{{ .Full }}",
-		matchesVersionFile: n.matchesVersionFile,
-		loadContext:        n.loadContext,
-	}
+func (n *Node) Enabled() bool {
+	n.loadSpec()
+
+	return n.Language.Enabled()
 }
 
-func (n *Node) Enabled() bool {
-	if n.language.Enabled() {
-		n.Mismatch = !n.matchesVersionFile()
-		return true
-	}
+// Activation implements the activation gate; see Language.activation.
+func (n *Node) Activation() Activation {
+	n.loadSpec()
 
-	return false
+	return n.activation()
+}
+
+func (n *Node) loadSpec() {
+	n.extensions = []string{"*.js", "*.ts", fileName, ".nvmrc", "pnpm-workspace.yaml", ".pnpmfile.cjs", ".vue"}
+	n.tooling = map[string]*cmd{
+		// node --version reports the resolved node binary's own build - true
+		// whether that binary comes straight from PATH or from an nvm/fnm/
+		// volta-style manager that swaps PATH per version (a different
+		// resolved path, not a shared shim).
+		nodeToolName: {
+			executable:       nodeToolName,
+			args:             []string{versionFlagArg},
+			regex:            `(?:v(?P<version>((?P<major>[0-9]+).(?P<minor>[0-9]+).(?P<patch>[0-9]+))))`,
+			versionCacheable: true,
+		},
+	}
+	n.defaultTooling = []string{nodeToolName}
+	n.versionURLTemplate = "https://github.com/nodejs/node/blob/main/doc/changelogs/CHANGELOG_V{{ .Major }}.md#{{ .Full }}"
+	n.Language.matchesVersionFile = n.matchesVersionFile
+	n.Language.loadContext = n.loadContext
 }
 
 func (n *Node) loadContext() {
-	if !n.language.props.GetBool(FetchPackageManager, false) {
+	if !n.options.Bool(FetchPackageManager, false) {
 		return
 	}
-	if n.language.env.HasFiles("yarn.lock") {
-		n.PackageManagerIcon = n.language.props.GetString(YarnIcon, " \uF61A")
-		return
+
+	packageManagerDefinitions := []struct {
+		fileName     string
+		name         string
+		iconProperty options.Option
+		defaultIcon  string
+	}{
+		{
+			fileName:     "pnpm-lock.yaml",
+			name:         pnpmToolName,
+			iconProperty: PnpmIcon,
+			defaultIcon:  "\ue865",
+		},
+		{
+			fileName:     "yarn.lock",
+			name:         yarnToolName,
+			iconProperty: YarnIcon,
+			defaultIcon:  "\ue6a7",
+		},
+		{
+			fileName:     "bun.lockb",
+			name:         bunToolName,
+			iconProperty: BunIcon,
+			defaultIcon:  "\ue76f",
+		},
+		{
+			fileName:     "bun.lock",
+			name:         bunToolName,
+			iconProperty: BunIcon,
+			defaultIcon:  "\ue76f",
+		},
+		{
+			fileName:     "package-lock.json",
+			name:         npmToolName,
+			iconProperty: NPMIcon,
+			defaultIcon:  "\uE71E",
+		},
+		{
+			fileName:     fileName,
+			name:         npmToolName,
+			iconProperty: NPMIcon,
+			defaultIcon:  "\uE71E",
+		},
 	}
-	if n.language.env.HasFiles("package-lock.json") || n.language.env.HasFiles("package.json") {
-		n.PackageManagerIcon = n.language.props.GetString(NPMIcon, " \uE71E")
+
+	for _, pm := range packageManagerDefinitions {
+		if n.env.HasFiles(pm.fileName) {
+			n.PackageManagerName = pm.name
+			n.PackageManagerIcon = n.options.Markup(pm.iconProperty, pm.defaultIcon)
+			break
+		}
 	}
 }
 
-func (n *Node) matchesVersionFile() bool {
-	fileVersion := n.language.env.FileContent(".nvmrc")
-	if len(fileVersion) == 0 {
-		return true
+func (n *Node) matchesVersionFile() (string, bool) {
+	fileVersion := n.env.FileContent(".nvmrc")
+	if fileVersion == "" {
+		return "", true
+	}
+
+	fileVersion = strings.TrimSpace(fileVersion)
+
+	if strings.HasPrefix(fileVersion, "lts/") {
+		fileVersion = strings.ToLower(fileVersion)
+		codeName := strings.TrimPrefix(fileVersion, "lts/")
+		switch codeName {
+		case "argon":
+			fileVersion = "4.9.1"
+		case "boron":
+			fileVersion = "6.17.1"
+		case "carbon":
+			fileVersion = "8.17.0"
+		case "dubnium":
+			fileVersion = "10.24.1"
+		case "erbium":
+			fileVersion = "12.22.12"
+		case "fermium":
+			fileVersion = "14.21.3"
+		case "gallium":
+			fileVersion = "16.20.2"
+		case "hydrogen":
+			fileVersion = "18.20.8"
+		case "iron":
+			fileVersion = "20.19.6"
+		case "jod":
+			fileVersion = "22.21.1"
+		case "krypton":
+			fileVersion = "24.12.0"
+		}
 	}
 
 	re := fmt.Sprintf(
 		`(?im)^v?%s(\.?%s)?(\.?%s)?$`,
-		n.language.version.Major,
-		n.language.version.Minor,
-		n.language.version.Patch,
+		n.Major,
+		n.Minor,
+		n.Patch,
 	)
 
-	return regex.MatchString(re, fileVersion)
+	version := strings.TrimSpace(fileVersion)
+	version = strings.TrimPrefix(version, "v")
+
+	return version, regex.MatchString(re, fileVersion)
 }

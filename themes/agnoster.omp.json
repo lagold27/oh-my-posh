@@ -24,10 +24,10 @@
           "background": "#91ddff",
           "foreground": "#100e23",
           "powerline_symbol": "\ue0b0",
-          "properties": {
+          "options": {
             "folder_icon": "\uf115",
             "folder_separator_icon": " \ue0b1 ",
-            "home_icon": "\uf7db",
+            "home_icon": "\ueb06",
             "style": "agnoster"
           },
           "style": "powerline",
@@ -55,13 +55,13 @@
           "foreground": "#ffffff",
           "powerline_symbol": "\ue0b0",
           "style": "powerline",
-          "template": " {{ .Meaning }} ",
-          "type": "exit"
+          "template": " {{ reason .Code }} ",
+          "type": "status"
         }
       ],
       "type": "prompt"
     }
   ],
   "final_space": true,
-  "version": 2
+  "version": 4
 }

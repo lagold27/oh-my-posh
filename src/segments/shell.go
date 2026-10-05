@@ -1,42 +1,39 @@
 package segments
 
 import (
-	"oh-my-posh/environment"
-	"oh-my-posh/properties"
 	"strings"
+
+	"github.com/jandedobbeleer/oh-my-posh/src/segments/options"
+	"github.com/jandedobbeleer/oh-my-posh/src/template"
 )
 
 type Shell struct {
-	props properties.Properties
-	env   environment.Environment
+	Base
 
-	Name    string
+	// Name is markup: a mapped_shell_names value is user configuration and
+	// may carry <...> anchors, while the detected shell name is escaped.
+	Name    template.Markup
 	Version string
 }
 
 const (
-	// MappedShellNames allows for custom text in place of shell names
-	MappedShellNames properties.Property = "mapped_shell_names"
+	MappedShellNames options.Option = "mapped_shell_names"
 )
 
 func (s *Shell) Template() string {
-	return " {{ .Name }} "
+	return NameTemplate
 }
 
 func (s *Shell) Enabled() bool {
-	mappedNames := s.props.GetKeyValueMap(MappedShellNames, make(map[string]string))
-	s.Name = s.env.Shell()
+	mappedNames := s.options.KeyValueMap(MappedShellNames, make(map[string]string))
+	name := s.env.Shell()
+	s.Name = template.EscapeMarkup(name)
 	s.Version = s.env.Flags().ShellVersion
 	for key, val := range mappedNames {
-		if strings.EqualFold(s.Name, key) {
-			s.Name = val
+		if strings.EqualFold(name, key) {
+			s.Name = template.RawMarkup(val)
 			break
 		}
 	}
 	return true
-}
-
-func (s *Shell) Init(props properties.Properties, env environment.Environment) {
-	s.props = props
-	s.env = env
 }

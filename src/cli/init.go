@@ -2,64 +2,190 @@ package cli
 
 import (
 	"fmt"
-	"oh-my-posh/environment"
-	"oh-my-posh/shell"
+	"os"
+	"path/filepath"
+	"strings"
 
-	"github.com/spf13/cobra"
+	"github.com/jandedobbeleer/oh-my-posh/src/cache"
+	"github.com/jandedobbeleer/oh-my-posh/src/cli/dsc"
+	"github.com/jandedobbeleer/oh-my-posh/src/cmdflag"
+	"github.com/jandedobbeleer/oh-my-posh/src/cmdtree"
+	"github.com/jandedobbeleer/oh-my-posh/src/config"
+	"github.com/jandedobbeleer/oh-my-posh/src/log"
+	"github.com/jandedobbeleer/oh-my-posh/src/runtime"
+	"github.com/jandedobbeleer/oh-my-posh/src/runtime/path"
+	"github.com/jandedobbeleer/oh-my-posh/src/shell"
+	"github.com/jandedobbeleer/oh-my-posh/src/template"
 )
 
 var (
-	print  bool
-	strict bool
+	printOutput bool
+	strict      bool
+	debug       bool
 
-	initCmd = &cobra.Command{
-		Use:   "init [bash|zsh|fish|powershell|pwsh|cmd|nu] --config ~/.mytheme.omp.json",
-		Short: "Initialize your shell and configuration",
-		Long: `Allows to initialize your shell and configuration.
-See the documentation to initialize your shell: https://ohmyposh.dev/docs/prompt.`,
-		ValidArgs: []string{
-			"bash",
-			"zsh",
-			"fish",
-			"powershell",
-			"pwsh",
-			"cmd",
-			"nu",
-		},
-		Args: cobra.OnlyValidArgs,
-		Run: func(cmd *cobra.Command, args []string) {
+	supportedShells = []string{
+		"bash",
+		"zsh",
+		"fish",
+		"powershell",
+		"pwsh",
+		"cmd",
+		"nu",
+		"elvish",
+		"xonsh",
+		"yash",
+	}
+
+	initCmd = createInitCmd()
+)
+
+func init() {
+	RootCmd.AddCommand(initCmd)
+}
+
+func createInitCmd() *cmdtree.Command {
+	initCmd := &cmdtree.Command{
+		Use:   "init [bash|zsh|fish|powershell|pwsh|cmd|nu|elvish|xonsh|yash]",
+		Short: "Initialize your shell and config",
+		Long: `Initialize your shell and config.
+
+See the documentation to initialize your shell: https://ohmyposh.dev/docs/installation/prompt.`,
+		ValidArgs: supportedShells,
+		Args:      NoArgsOrOneValidArg,
+		Run: func(cmd *cmdtree.Command, args []string) {
 			if len(args) == 0 {
 				_ = cmd.Help()
 				return
 			}
-			runInit(args[0])
+
+			runInit(args[0], getFullCommand(cmd, args))
 		},
 	}
-)
 
-func init() { // nolint:gochecknoinits
-	initCmd.Flags().BoolVarP(&print, "print", "p", false, "print the init script")
-	initCmd.Flags().BoolVarP(&strict, "strict", "s", false, "run in strict mode")
+	initCmd.Flags().BoolVarP(&printOutput, "print", "p", false, "print the init script")
+	initCmd.Flags().BoolVarP(&strict, "strict", "s", false, "resolve the executable through PATH")
+	initCmd.Flags().BoolVar(&debug, "debug", false, "enable/disable debug mode")
+	initCmd.Flags().BoolVar(&eval, "eval", false, "output the full init script for eval")
+
 	_ = initCmd.MarkPersistentFlagRequired("config")
-	rootCmd.AddCommand(initCmd)
+
+	return initCmd
 }
 
-func runInit(shellName string) {
-	env := &environment.ShellEnvironment{
-		Version: cliVersion,
-		CmdFlags: &environment.Flags{
-			Shell:  shellName,
-			Config: config,
-			Strict: strict,
-		},
-	}
-	env.Init(false)
-	defer env.Close()
-	if print {
-		init := shell.PrintInit(env)
-		fmt.Print(init)
+func runInit(sh, command string) {
+	if os.Getenv("CURSOR_AGENT") == "1" {
+		log.Errorf("oh-my-posh init is disabled when running inside Cursor agent mode")
 		return
 	}
-	init := shell.Init(env)
-	fmt.Print(init)
+
+	if debug {
+		log.Enable(plain)
+	}
+
+	if sh == "powershell" {
+		sh = shell.PWSH
+	}
+
+	initCache(sh)
+
+	cfg := config.Load(configFlag)
+
+	flags := &runtime.Flags{
+		Shell:      sh,
+		ConfigPath: cfg.Source,
+		ConfigHash: cfg.Hash(),
+		Strict:     strict,
+		Debug:      debug,
+		Init:       true,
+		Eval:       eval,
+		Plain:      plain,
+	}
+
+	env := &runtime.Terminal{}
+	env.Init(flags)
+
+	template.Init(env, cfg.Var, cfg.Maps)
+
+	defer func() {
+		cfg.Store()
+		template.SaveCache()
+		if err := cache.Clear(false, shell.InitScriptName(env.Flags())); err != nil {
+			log.Error(err)
+		}
+		cache.Close()
+	}()
+
+	feats := cfg.Features(env)
+
+	var output string
+
+	switch {
+	case debug:
+		output = shell.Debug(env, feats, &startTime)
+	case printOutput:
+		output = shell.Script(env, feats)
+	default:
+		output = shell.Init(env, feats)
+	}
+
+	shellDSC := dsc.ShellDSC()
+	shellDSC.Load()
+	shellDSC.Add(&dsc.Shell{
+		Command: command,
+		Name:    sh,
+	})
+	shellDSC.Save()
+
+	if silent {
+		return
+	}
+
+	fmt.Print(output)
+}
+
+func getFullCommand(cmd *cmdtree.Command, args []string) string {
+	// Start with the command path
+	cmdPath := cmd.CommandPath()
+
+	// Add arguments
+	if len(args) > 0 {
+		cmdPath += " " + strings.Join(args, " ")
+	}
+
+	// Add flags that were actually set
+	cmd.Flags().VisitAll(func(flag *cmdflag.Flag) {
+		if !flag.Changed {
+			return
+		}
+
+		if flag.Value.Type() == "bool" && flag.Value.String() == "true" {
+			cmdPath += fmt.Sprintf(" --%s", flag.Name)
+			return
+		}
+
+		if flag.Name == "config" {
+			configPath := filepath.Clean(flag.Value.String())
+			configPath = strings.ReplaceAll(configPath, path.Home(), "~")
+			cmdPath += fmt.Sprintf(" --%s=%s", flag.Name, configPath)
+			return
+		}
+
+		cmdPath += fmt.Sprintf(" --%s=%s", flag.Name, flag.Value.String())
+	})
+
+	return cmdPath
+}
+
+func initCache(sh string) {
+	switch {
+	case !printOutput:
+		if (eval && sh == shell.PWSH) || sh == shell.ELVISH {
+			cache.Init(sh)
+			return
+		}
+
+		fallthrough
+	default:
+		cache.Init(sh, cache.NewSession, cache.Persist)
+	}
 }

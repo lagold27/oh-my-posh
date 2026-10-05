@@ -20,7 +20,7 @@
           "background": "#91ddff",
           "foreground": "#100e23",
           "powerline_symbol": "\ue0b0",
-          "properties": {
+          "options": {
             "style": "full"
           },
           "style": "powerline",
@@ -49,12 +49,12 @@
           "powerline_symbol": "\ue0b0",
           "style": "powerline",
           "template": " \ue20f ",
-          "type": "exit"
+          "type": "status"
         }
       ],
       "type": "prompt"
     }
   ],
   "final_space": true,
-  "version": 2
+  "version": 4
 }

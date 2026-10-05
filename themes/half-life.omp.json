@@ -18,7 +18,7 @@
         },
         {
           "foreground": "#87FF00",
-          "properties": {
+          "options": {
             "style": "full"
           },
           "style": "plain",
@@ -27,7 +27,7 @@
         },
         {
           "foreground": "#5FD7FF",
-          "properties": {
+          "options": {
             "branch_ahead_icon": "",
             "branch_behind_icon": "",
             "branch_gone_icon": "",
@@ -35,7 +35,6 @@
             "branch_identical_icon": "",
             "cherry_pick_icon": "",
             "commit_icon": "",
-            "fetch_status": true,
             "merge_icon": "",
             "rebase_icon": "",
             "revert_icon": "",
@@ -55,5 +54,5 @@
       "type": "prompt"
     }
   ],
-  "version": 2
+  "version": 4
 }

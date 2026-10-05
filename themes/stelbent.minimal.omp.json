@@ -18,7 +18,7 @@
         },
         {
           "foreground": "#689f38",
-          "properties": {
+          "options": {
             "time_format": "15:04:05"
           },
           "style": "plain",
@@ -42,7 +42,7 @@
           "background": "#91ddff",
           "foreground": "#100e23",
           "powerline_symbol": "\ue0b0",
-          "properties": {
+          "options": {
             "style": "folder"
           },
           "style": "powerline",
@@ -59,23 +59,21 @@
           ],
           "foreground": "#100e23",
           "powerline_symbol": "\ue0b0",
-          "properties": {
+          "options": {
             "branch_ahead_icon": "\u2191",
             "branch_behind_icon": "\u2193",
-            "branch_gone": "\u2262",
+            "branch_gone_icon": "\u2262",
             "branch_icon": "\ue0a0 ",
             "branch_identical_icon": "\u2261",
             "cherry_pick_icon": "\u2713 ",
             "commit_icon": "\u25b7 ",
-            "fetch_stash_count": true,
-            "fetch_status": true,
             "merge_icon": "\u25f4 ",
             "no_commits_icon": "[no commits]",
             "rebase_icon": "\u2c62 ",
             "tag_icon": "\u25b6 "
           },
           "style": "powerline",
-          "template": " {{ .HEAD }}{{ .BranchStatus }}{{ if .Working.Changed }} {{ .Working.String }}{{ end }}{{ if and (.Working.Changed) (.Staging.Changed) }} \u2502{{ end }}{{ if .Staging.Changed }} {{ .Staging.String }}{{ end }}{{ if gt .StashCount 0 }} {{ .StashCount }}{{ end }} ",
+          "template": " {{ .HEAD }}{{if .BranchStatus }} {{ .BranchStatus }}{{ end }}{{ if .Working.Changed }} {{ .Working.String }}{{ end }}{{ if and (.Working.Changed) (.Staging.Changed) }} \u2502{{ end }}{{ if .Staging.Changed }} {{ .Staging.String }}{{ end }}{{ if gt .StashCount 0 }} {{ .StashCount }}{{ end }} ",
           "type": "git"
         },
         {
@@ -92,7 +90,7 @@
           "powerline_symbol": "\ue0b0",
           "style": "powerline",
           "template": " error ",
-          "type": "exit"
+          "type": "status"
         }
       ],
       "type": "prompt"
@@ -118,6 +116,5 @@
     }
   ],
   "final_space": true,
-  "osc99": true,
-  "version": 2
+  "version": 4
 }

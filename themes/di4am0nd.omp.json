@@ -12,7 +12,7 @@
         },
         {
           "foreground": "#00C6F7",
-          "properties": {
+          "options": {
             "style": "folder"
           },
           "style": "plain",
@@ -21,18 +21,12 @@
         },
         {
           "foreground": "#F62F2E",
-          "properties": {
-            "fetch_status": true
-          },
           "style": "plain",
-          "template": "<#ffffff>on</> {{ .HEAD }}{{ .BranchStatus }}{{ if .Working.Changed }} \uf044 {{ .Working.String }}{{ end }}{{ if and (.Working.Changed) (.Staging.Changed) }} |{{ end }}{{ if .Staging.Changed }} \uf046 {{ .Staging.String }}{{ end }} ",
+          "template": "<#ffffff>on</> {{ .HEAD }}{{if .BranchStatus }} {{ .BranchStatus }}{{ end }}{{ if .Working.Changed }} \uf044 {{ .Working.String }}{{ end }}{{ if and (.Working.Changed) (.Staging.Changed) }} |{{ end }}{{ if .Staging.Changed }} \uf046 {{ .Staging.String }}{{ end }} ",
           "type": "git"
         },
         {
           "foreground": "#98C379",
-          "properties": {
-            "fetch_version": true
-          },
           "style": "plain",
           "template": "<#ffffff>via</> \ue781 {{ if .PackageManagerIcon }}{{ .PackageManagerIcon }} {{ end }}{{ .Full }} ",
           "type": "node"
@@ -46,14 +40,14 @@
         {
           "foreground": "#85C980",
           "style": "diamond",
-          "template": "RAM:{{ (div ((sub .PhysicalTotalMemory .PhysicalFreeMemory)|float64) 1000000000.0) }}/{{ (div .PhysicalTotalMemory 1000000000.0) }}GB ",
+          "template": "RAM:{{ (div ((sub .PhysicalTotalMemory .PhysicalAvailableMemory)|float64) 1073741824.0) }}/{{ (div .PhysicalTotalMemory 1073741824.0) }}GB ",
           "trailing_diamond": " ",
           "type": "sysinfo"
         },
         {
           "foreground": "#ffffff",
           "leading_diamond": "\u250b",
-          "properties": {
+          "options": {
             "style": "roundrock",
             "threshold": 0
           },
@@ -79,5 +73,5 @@
     }
   ],
   "final_space": true,
-  "version": 2
+  "version": 4
 }

@@ -1,89 +1,187 @@
 package segments
 
 import (
-	"fmt"
-	"oh-my-posh/environment"
-	"oh-my-posh/properties"
+	"path/filepath"
 	"strings"
+
+	"github.com/jandedobbeleer/oh-my-posh/src/log"
+	"github.com/jandedobbeleer/oh-my-posh/src/regex"
+	"github.com/jandedobbeleer/oh-my-posh/src/segments/options"
+
+	"github.com/jandedobbeleer/oh-my-posh/src/ini"
 )
 
 type Aws struct {
-	props properties.Properties
-	env   environment.Environment
+	Base
 
-	Profile string
-	Region  string
+	// Credential-file entries take precedence over config-file entries for the
+	// same key, mirroring the AWS SDK's resolution order.
+	Settings map[string]string
+
+	// Populated only when the active profile references a session via the sso_session key.
+	SSOSession map[string]string
+
+	Profile     string
+	Region      string
+	AccountID   string
+	AccessKeyID string
 }
 
 const (
-	defaultUser = "default"
+	defaultStr = "default"
+
+	awsKeyRegion       = "region"
+	awsKeyAccessKeyID  = "aws_access_key_id"
+	awsKeyAccountID    = "aws_account_id"
+	awsKeySSOAccountID = "sso_account_id"
+	awsKeySSOSession   = "sso_session"
+
+	awsConfigSectionPrefix     = "profile "
+	awsConfigSectionSSOSession = "sso-session "
 )
 
 func (a *Aws) Template() string {
 	return " {{ .Profile }}{{ if .Region }}@{{ .Region }}{{ end }} "
 }
 
-func (a *Aws) Init(props properties.Properties, env environment.Environment) {
-	a.props = props
-	a.env = env
-}
-
 func (a *Aws) Enabled() bool {
+	a.Settings = map[string]string{}
+	a.SSOSession = map[string]string{}
+
 	getEnvFirstMatch := func(envs ...string) string {
 		for _, env := range envs {
-			value := a.env.Getenv(env)
-			if value != "" {
+			if value := a.env.Getenv(env); value != "" {
 				return value
 			}
 		}
+
 		return ""
 	}
-	displayDefaultUser := a.props.GetBool(properties.DisplayDefault, true)
-	a.Profile = getEnvFirstMatch("AWS_VAULT", "AWS_PROFILE")
-	if !displayDefaultUser && a.Profile == defaultUser {
+
+	displayDefaultUser := a.options.Bool(options.DisplayDefault, true)
+
+	a.Profile = getEnvFirstMatch("AWS_VAULT", "AWS_DEFAULT_PROFILE", "AWS_PROFILE")
+	if !displayDefaultUser && a.Profile == defaultStr {
 		return false
 	}
+
 	a.Region = getEnvFirstMatch("AWS_REGION", "AWS_DEFAULT_REGION")
-	if a.Profile != "" && a.Region != "" {
-		return true
+	a.AccessKeyID = a.env.Getenv("AWS_ACCESS_KEY_ID")
+
+	a.loadConfigFile()
+	a.loadCredentialsFile()
+
+	if a.Region == "" {
+		a.Region = a.Settings[awsKeyRegion]
 	}
-	if a.Profile == "" && a.Region != "" && displayDefaultUser {
-		a.Profile = defaultUser
-		return true
+
+	if a.AccountID == "" {
+		a.AccountID = firstNonEmpty(a.Settings[awsKeySSOAccountID], a.Settings[awsKeyAccountID])
 	}
-	a.getConfigFileInfo()
-	if !displayDefaultUser && a.Profile == defaultUser {
+
+	if a.AccessKeyID == "" {
+		a.AccessKeyID = a.Settings[awsKeyAccessKeyID]
+	}
+
+	if a.Profile == "" && a.Region != "" {
+		a.Profile = defaultStr
+	}
+
+	if !displayDefaultUser && a.Profile == defaultStr {
 		return false
 	}
+
 	return a.Profile != ""
 }
 
-func (a *Aws) getConfigFileInfo() {
+func (a *Aws) loadConfigFile() {
 	configPath := a.env.Getenv("AWS_CONFIG_FILE")
 	if configPath == "" {
-		configPath = fmt.Sprintf("%s/.aws/config", a.env.Home())
+		configPath = filepath.Join(a.env.Home(), ".aws", "config")
 	}
-	config := a.env.FileContent(configPath)
-	configSection := "[default]"
+
+	cfg, ok := a.parseINI(configPath)
+	if !ok {
+		return
+	}
+
+	sectionName := defaultStr
 	if a.Profile != "" {
-		configSection = fmt.Sprintf("[profile %s]", a.Profile)
+		sectionName = awsConfigSectionPrefix + a.Profile
 	}
-	configLines := strings.Split(config, "\n")
-	var sectionActive bool
-	for _, line := range configLines {
-		if strings.HasPrefix(line, configSection) {
-			sectionActive = true
-			continue
+
+	a.copySection(cfg, sectionName, a.Settings)
+
+	if sessionName := a.Settings[awsKeySSOSession]; sessionName != "" {
+		a.copySection(cfg, awsConfigSectionSSOSession+sessionName, a.SSOSession)
+	}
+}
+
+func (a *Aws) loadCredentialsFile() {
+	credentialsPath := a.env.Getenv("AWS_SHARED_CREDENTIALS_FILE")
+	if credentialsPath == "" {
+		credentialsPath = filepath.Join(a.env.Home(), ".aws", "credentials")
+	}
+
+	cfg, ok := a.parseINI(credentialsPath)
+	if !ok {
+		return
+	}
+
+	sectionName := defaultStr
+	if a.Profile != "" {
+		sectionName = a.Profile
+	}
+
+	a.copySection(cfg, sectionName, a.Settings)
+}
+
+func (a *Aws) parseINI(path string) (*ini.File, bool) {
+	content := a.env.FileContent(path)
+	if content == "" {
+		return nil, false
+	}
+
+	cfg, err := ini.LoadVerbatim(content)
+	if err != nil {
+		log.Error(err)
+		return nil, false
+	}
+
+	return cfg, true
+}
+
+func (a *Aws) copySection(cfg *ini.File, name string, dest map[string]string) {
+	section, err := cfg.GetSection(name)
+	if err != nil {
+		return
+	}
+
+	for _, key := range section.Keys() {
+		dest[key.Name()] = strings.TrimSpace(key.Value())
+	}
+}
+
+func firstNonEmpty(values ...string) string {
+	for _, v := range values {
+		if v != "" {
+			return v
 		}
-		if sectionActive && strings.HasPrefix(line, "region") {
-			splitted := strings.Split(line, "=")
-			if len(splitted) >= 2 {
-				a.Region = strings.TrimSpace(splitted[1])
-				break
-			}
-		}
 	}
-	if a.Profile == "" && a.Region != "" {
-		a.Profile = defaultUser
+
+	return ""
+}
+
+func (a *Aws) RegionAlias() string {
+	if a.Region == "" {
+		return ""
 	}
+
+	splitted := strings.Split(a.Region, "-")
+	if len(splitted) < 2 {
+		return a.Region
+	}
+
+	splitted[1] = regex.ReplaceAllString(`orth|outh|ast|est|entral`, splitted[1], "")
+	return strings.Join(splitted, "")
 }

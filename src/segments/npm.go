@@ -1,34 +1,40 @@
 package segments
 
-import (
-	"oh-my-posh/environment"
-	"oh-my-posh/properties"
-)
-
 type Npm struct {
-	language
+	Language
 }
 
 func (n *Npm) Enabled() bool {
-	return n.language.Enabled()
+	n.loadSpec()
+
+	return n.Language.Enabled()
+}
+
+// Activation implements the activation gate; see Language.activation.
+func (n *Npm) Activation() Activation {
+	n.loadSpec()
+
+	return n.activation()
+}
+
+func (n *Npm) loadSpec() {
+	n.extensions = []string{fileName, "package-lock.json"}
+	n.tooling = map[string]*cmd{
+		// Unlike yarn/pnpm, npm ships bundled with node itself and Corepack
+		// does not shim it by default, so npm --version is not routed through
+		// a project-pinned dispatcher: it reports the resolved binary's own
+		// version.
+		npmToolName: {
+			executable:       npmToolName,
+			args:             []string{versionFlagArg},
+			regex:            versionRegex,
+			versionCacheable: true,
+		},
+	}
+	n.defaultTooling = []string{npmToolName}
+	n.versionURLTemplate = "https://github.com/npm/cli/releases/tag/v{{ .Full }}"
 }
 
 func (n *Npm) Template() string {
 	return " \ue71e {{.Full}} "
-}
-
-func (n *Npm) Init(props properties.Properties, env environment.Environment) {
-	n.language = language{
-		env:        env,
-		props:      props,
-		extensions: []string{"package.json", "package-lock.json"},
-		commands: []*cmd{
-			{
-				executable: "npm",
-				args:       []string{"--version"},
-				regex:      `(?P<version>((?P<major>[0-9]+).(?P<minor>[0-9]+).(?P<patch>[0-9]+)))`,
-			},
-		},
-		versionURLTemplate: "https://github.com/npm/cli/releases/tag/v{{ .Full }}",
-	}
 }

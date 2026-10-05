@@ -2,48 +2,42 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Debug Prompt",
+      "name": "Primary",
       "type": "go",
       "request": "launch",
       "mode": "debug",
       "program": "${workspaceRoot}/src",
       "args": [
-        "prompt",
         "print",
         "primary",
-        "--config=https://gist.githubusercontent.com/ehawman-rosenberg/50b3b695526f03690cfd396d02c2cca3/raw/c2e0bc78cdf551b0cc76f593e4fd70428f981c0e/eh-tea.omp.json",
         "--shell=pwsh",
-        "--terminal-width=200",
+        "--terminal-width=200"
       ]
     },
     {
-      "name": "Debug Tooltip",
+      "name": "Tooltip",
       "type": "go",
       "request": "launch",
       "mode": "debug",
       "program": "${workspaceRoot}/src",
       "args": [
-        "prompt",
         "print",
         "tooltip",
-        "--config=${workspaceRoot}/themes/jandedobbeleer.omp.json",
         "--command=git",
         "--shell=pwsh"
       ]
     },
     {
-      "name": "Debug Transient",
+      "name": "Transient",
       "type": "go",
       "request": "launch",
       "mode": "debug",
       "program": "${workspaceRoot}/src",
       "args": [
-        "prompt",
         "print",
         "transient",
-        "--config=${workspaceRoot}/themes/jandedobbeleer.omp.json",
         "--shell=pwsh",
-        "--error=1"
+        "--status=1"
       ]
     },
     {
@@ -57,33 +51,40 @@
       ]
     },
     {
-      "name": "Print debug",
+      "name": "Debug",
       "type": "go",
       "request": "launch",
       "mode": "debug",
       "program": "${workspaceRoot}/src",
       "args": [
-        "prompt",
-        "debug",
-        "--config=${workspaceRoot}/themes/jandedobbeleer.omp.json"
+        "debug"
       ]
     },
     {
-      "name": "Print init",
+      "name": "Init",
       "type": "go",
       "request": "launch",
       "mode": "debug",
       "program": "${workspaceRoot}/src",
       "args": [
-        "prompt",
         "init",
         "cmd",
-        "--config=${workspaceRoot}/themes/jandedobbeleer.omp.json",
         "--print"
       ]
     },
     {
-      "name": "Export PNG",
+      "name": "Export Config",
+      "type": "go",
+      "request": "launch",
+      "mode": "debug",
+      "program": "${workspaceRoot}/src",
+      "args": [
+        "config",
+        "export"
+      ]
+    },
+    {
+      "name": "Export Image",
       "type": "go",
       "request": "launch",
       "mode": "debug",
@@ -91,10 +92,7 @@
       "args": [
         "config",
         "export",
-        "png",
-        "--rprompt-offset=40",
-        "--cursor-padding=15",
-        "--config=${workspaceRoot}/themes/jandedobbeleer.omp.json"
+        "image"
       ]
     },
     {
@@ -105,34 +103,134 @@
       "program": "${workspaceRoot}/src",
       "args": [
         "config",
+        "migrate"
+      ]
+    },
+    {
+      "name": "Migrate glyphs",
+      "type": "go",
+      "request": "launch",
+      "mode": "debug",
+      "program": "${workspaceRoot}/src",
+      "args": [
+        "config",
         "migrate",
-        "--config=${workspaceRoot}/themes/jandedobbeleer.omp.json",
+        "glyphs"
+      ]
+    },
+    {
+      "name": "Get value",
+      "type": "go",
+      "request": "launch",
+      "mode": "debug",
+      "program": "${workspaceRoot}/src",
+      "args": [
+        "get",
+        "accent"
+      ]
+    },
+    {
+      "name": "Toggle segment",
+      "type": "go",
+      "request": "launch",
+      "mode": "debug",
+      "program": "${workspaceRoot}/src",
+      "args": [
+        "toggle",
+        "git"
+      ]
+    },
+    {
+      "name": "Notice",
+      "type": "go",
+      "request": "launch",
+      "mode": "debug",
+      "program": "${workspaceRoot}/src",
+      "args": [
+        "notice"
+      ]
+    },
+    {
+      "name": "Upgrade",
+      "type": "go",
+      "request": "launch",
+      "mode": "debug",
+      "program": "${workspaceRoot}/src",
+      "args": [
+        "upgrade"
+      ]
+    },
+    {
+      "name": "Font install",
+      "type": "go",
+      "request": "launch",
+      "mode": "debug",
+      "program": "${workspaceRoot}/src",
+      "args": [
+        "font",
+        "install",
+        "AnonymousPro"
+      ]
+    },
+    {
+      "name": "Auth YTMDA",
+      "type": "go",
+      "request": "launch",
+      "mode": "debug",
+      "program": "${workspaceRoot}/src",
+      "args": [
+        "auth",
+        "ytmda"
+      ]
+    },
+    {
+      "name": "DSC schema",
+      "type": "go",
+      "request": "launch",
+      "mode": "debug",
+      "program": "${workspaceRoot}/src",
+      "args": [
+        "font",
+        "dsc",
+        "schema"
       ]
     },
     {
       "type": "node",
       "request": "launch",
       "name": "Theme export",
-      "cwd": "${workspaceFolder}/docs",
-      "program": "${workspaceRoot}/docs/export_themes.js",
+      "cwd": "${workspaceFolder}/website",
+      "program": "${workspaceRoot}/website/export_themes.mjs",
       "console": "integratedTerminal"
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Bluesky",
+      "cwd": "${workspaceFolder}/scripts/bluesky",
+      "program": "${workspaceRoot}/scripts/bluesky/main.cjs",
+      "console": "integratedTerminal",
+      "envFile": "${workspaceFolder}/scripts/bluesky/.env"
     },
     {
       "name": "Docs API",
       "type": "node",
       "request": "attach",
       "port": 9229,
-      "preDebugTask": "func: host start"
+      "preLaunchTask": "func: host start",
+      "cwd": "${workspaceFolder}/website",
+      "envFile": "${workspaceFolder}/website/.env"
     },
     {
-      "name": "Debug CLI(cache)",
+      "name": "Cache clear",
       "type": "go",
       "request": "launch",
       "mode": "debug",
       "program": "${workspaceRoot}/src",
       "args": [
         "cache",
+        "clear"
       ]
-    },
+    }
   ]
 }

@@ -1,35 +1,37 @@
 package segments
 
-import (
-	"oh-my-posh/environment"
-	"oh-my-posh/properties"
-)
-
 type Cf struct {
-	language
+	Language
 }
 
 func (c *Cf) Template() string {
 	return languageTemplate
 }
 
-func (c *Cf) Init(props properties.Properties, env environment.Environment) {
-	c.language = language{
-		env:        env,
-		props:      props,
-		extensions: []string{"manifest.yml", "mta.yaml"},
-		commands: []*cmd{
-			{
-				executable: "cf",
-				args:       []string{"version"},
-				regex:      `(?:(?P<version>((?P<major>[0-9]+).(?P<minor>[0-9]+).(?P<patch>[0-9]+))))`,
-			},
-		},
-		displayMode:        props.GetString(DisplayMode, DisplayModeFiles),
-		versionURLTemplate: "https://github.com/cloudfoundry/cli/releases/tag/v{{ .Full }}",
-	}
+func (c *Cf) Enabled() bool {
+	c.loadSpec()
+
+	return c.Language.Enabled()
 }
 
-func (c *Cf) Enabled() bool {
-	return c.language.Enabled()
+// Activation implements the activation gate; see Language.activation.
+func (c *Cf) Activation() Activation {
+	c.loadSpec()
+
+	return c.activation()
+}
+
+func (c *Cf) loadSpec() {
+	c.extensions = []string{"manifest.yml", "mta.yaml"}
+	c.tooling = map[string]*cmd{
+		"cf": {
+			executable:       "cf",
+			args:             []string{versionArg},
+			regex:            versionRegexPrefixed,
+			versionCacheable: true,
+		},
+	}
+	c.defaultTooling = []string{"cf"}
+	c.displayMode = c.options.String(DisplayMode, DisplayModeFiles)
+	c.versionURLTemplate = "https://github.com/cloudfoundry/cli/releases/tag/v{{ .Full }}"
 }

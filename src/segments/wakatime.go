@@ -2,30 +2,29 @@ package segments
 
 import (
 	"encoding/json"
-	"oh-my-posh/environment"
-	"oh-my-posh/properties"
+
+	"github.com/jandedobbeleer/oh-my-posh/src/segments/options"
 )
 
 type Wakatime struct {
-	props properties.Properties
-	env   environment.Environment
+	Base
 
-	wtData
+	WtData
 }
 
 type wtTotals struct {
-	Seconds float64 `json:"seconds"`
 	Text    string  `json:"text"`
+	Seconds float64 `json:"seconds"`
 }
 
-type wtData struct {
-	CummulativeTotal wtTotals `json:"cummulative_total"`
-	Start            string   `json:"start"`
-	End              string   `json:"end"`
+type WtData struct {
+	Start           string   `json:"start"`
+	End             string   `json:"end"`
+	CumulativeTotal wtTotals `json:"cumulative_total"`
 }
 
 func (w *Wakatime) Template() string {
-	return " {{ secondsRound .CummulativeTotal.Seconds }} "
+	return " {{ secondsRound .CumulativeTotal.Seconds }} "
 }
 
 func (w *Wakatime) Enabled() bool {
@@ -34,37 +33,19 @@ func (w *Wakatime) Enabled() bool {
 }
 
 func (w *Wakatime) setAPIData() error {
-	url := w.props.GetString(URL, "")
-	cacheTimeout := w.props.GetInt(CacheTimeout, DefaultCacheTimeout)
-	if cacheTimeout > 0 {
-		// check if data stored in cache
-		if val, found := w.env.Cache().Get(url); found {
-			err := json.Unmarshal([]byte(val), &w.wtData)
-			if err != nil {
-				return err
-			}
-			return nil
-		}
-	}
+	url := w.options.Template(URL, "", w)
 
-	httpTimeout := w.props.GetInt(HTTPTimeout, DefaultHTTPTimeout)
+	httpTimeout := w.options.Int(options.HTTPTimeout, options.DefaultHTTPTimeout)
 
-	body, err := w.env.HTTPRequest(url, httpTimeout)
-	if err != nil {
-		return err
-	}
-	err = json.Unmarshal(body, &w.wtData)
+	body, err := w.env.HTTPRequest(url, nil, httpTimeout)
 	if err != nil {
 		return err
 	}
 
-	if cacheTimeout > 0 {
-		w.env.Cache().Set(url, string(body), cacheTimeout)
+	err = json.Unmarshal(body, &w.WtData)
+	if err != nil {
+		return err
 	}
+
 	return nil
-}
-
-func (w *Wakatime) Init(props properties.Properties, env environment.Environment) {
-	w.props = props
-	w.env = env
 }

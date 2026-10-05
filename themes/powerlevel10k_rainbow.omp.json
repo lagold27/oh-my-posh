@@ -16,7 +16,7 @@
           "background": "#3465a4",
           "foreground": "#e4e4e4",
           "powerline_symbol": "\ue0b0",
-          "properties": {
+          "options": {
             "home_icon": "~",
             "style": "full"
           },
@@ -34,14 +34,11 @@
           ],
           "foreground": "#000000",
           "powerline_symbol": "\ue0b0",
-          "properties": {
-            "branch_icon": "\uf126 ",
-            "fetch_stash_count": true,
-            "fetch_status": true,
-            "fetch_upstream_icon": true
+          "options": {
+            "branch_icon": "\uf126 "
           },
           "style": "powerline",
-          "template": " {{ .UpstreamIcon }}{{ .HEAD }}{{ .BranchStatus }}{{ if .Working.Changed }} \uf044 {{ .Working.String }}{{ end }}{{ if and (.Working.Changed) (.Staging.Changed) }} |{{ end }}{{ if .Staging.Changed }} \uf046 {{ .Staging.String }}{{ end }}{{ if gt .StashCount 0 }} \uf692 {{ .StashCount }}{{ end }} ",
+          "template": " {{ .UpstreamIcon }}{{ .HEAD }}{{if .BranchStatus }} {{ .BranchStatus }}{{ end }}{{ if .Working.Changed }} \uf044 {{ .Working.String }}{{ end }}{{ if and (.Working.Changed) (.Staging.Changed) }} |{{ end }}{{ if .Staging.Changed }} \uf046 {{ .Staging.String }}{{ end }}{{ if gt .StashCount 0 }} \ueb4b {{ .StashCount }}{{ end }} ",
           "type": "git"
         }
       ],
@@ -55,11 +52,8 @@
           "foreground": "#ffffff",
           "invert_powerline": true,
           "powerline_symbol": "\ue0b2",
-          "properties": {
-            "fetch_version": true
-          },
           "style": "powerline",
-          "template": " {{ if .PackageManagerIcon }}{{ .PackageManagerIcon }} {{ end }}{{ .Full }} \uf898 ",
+          "template": " {{ if .PackageManagerIcon }}{{ .PackageManagerIcon }} {{ end }}{{ .Full }} \ue718 ",
           "type": "node"
         },
         {
@@ -67,9 +61,6 @@
           "foreground": "#111111",
           "invert_powerline": true,
           "powerline_symbol": "\ue0b2",
-          "properties": {
-            "fetch_version": true
-          },
           "style": "powerline",
           "template": " {{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }} \ue627 ",
           "type": "go"
@@ -79,9 +70,6 @@
           "foreground": "#111111",
           "invert_powerline": true,
           "powerline_symbol": "\ue0b2",
-          "properties": {
-            "fetch_version": true
-          },
           "style": "powerline",
           "template": " {{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }} \ue624 ",
           "type": "julia"
@@ -91,7 +79,7 @@
           "foreground": "#111111",
           "invert_powerline": true,
           "powerline_symbol": "\ue0b2",
-          "properties": {
+          "options": {
             "display_mode": "files",
             "fetch_virtual_env": false
           },
@@ -104,9 +92,8 @@
           "foreground": "#ffffff",
           "invert_powerline": true,
           "powerline_symbol": "\ue0b2",
-          "properties": {
-            "display_mode": "files",
-            "fetch_version": true
+          "options": {
+            "display_mode": "files"
           },
           "style": "powerline",
           "template": " {{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }} \ue791 ",
@@ -117,9 +104,8 @@
           "foreground": "#ffffff",
           "invert_powerline": true,
           "powerline_symbol": "\ue0b2",
-          "properties": {
-            "display_mode": "files",
-            "fetch_version": false
+          "options": {
+            "display_mode": "files"
           },
           "style": "powerline",
           "template": " {{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }} \uf0e7",
@@ -133,7 +119,7 @@
           "foreground": "#ffffff",
           "invert_powerline": true,
           "powerline_symbol": "\ue0b2",
-          "properties": {
+          "options": {
             "display_default": false
           },
           "style": "powerline",
@@ -166,12 +152,12 @@
           "foreground": "#d3d7cf",
           "invert_powerline": true,
           "powerline_symbol": "\ue0b2",
-          "properties": {
+          "options": {
             "always_enabled": true
           },
           "style": "powerline",
-          "template": " {{ if gt .Code 0 }}{{ .Meaning }}{{ else }}\u2714{{ end }} ",
-          "type": "exit"
+          "template": " {{ if gt .Code 0 }}{{ reason .Code }}{{ else }}\uf42e{{ end }} ",
+          "type": "status"
         },
         {
           "background": "#d3d7cf",
@@ -212,5 +198,5 @@
   ],
   "console_title_template": "{{ .Shell }} in {{ .Folder }}",
   "final_space": true,
-  "version": 2
+  "version": 4
 }

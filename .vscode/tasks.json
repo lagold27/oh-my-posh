@@ -21,9 +21,7 @@
       "problemMatcher": "$go",
       "args": [
         "build",
-        "-v",
-        "-ldflags",
-        "\"-X 'main.Version=development-$(git --no-pager log -1 --pretty=%h-%s)'\""
+        "-v"
       ]
     },
     {
@@ -54,15 +52,15 @@
         "-o",
         "/home/vscode/bin/oh-my-posh",
         "-ldflags",
-        "\"-X 'main.Version=development-$(git --no-pager log -1 --pretty=%h-%s)'\""
+        "\"-s -w -X 'github.com/jandedobbeleer/oh-my-posh/src/build.Version=development-$(git --no-pager log -1 --pretty=%h-%s)' -extldflags '-static'\""
       ]
     },
     {
       "type": "npm",
       "script": "start",
-      "path": "docs/",
+      "path": "website/",
       "problemMatcher": [],
-      "label": "docs: start site",
+      "label": "website: start",
       "detail": "cross-env NODE_ENV=development docusaurus start"
     },
     {
@@ -72,7 +70,7 @@
       "isBackground": true,
       "dependsOn": "npm install (functions)",
       "options": {
-        "cwd": "${workspaceFolder}/docs/api"
+        "cwd": "${workspaceFolder}/website/api"
       }
     },
     {
@@ -80,7 +78,7 @@
       "label": "npm install (functions)",
       "command": "npm install",
       "options": {
-        "cwd": "${workspaceFolder}/docs/api"
+        "cwd": "${workspaceFolder}/website/api"
       }
     },
     {
@@ -89,7 +87,7 @@
       "command": "npm prune --production",
       "problemMatcher": [],
       "options": {
-        "cwd": "${workspaceFolder}/docs/api"
+        "cwd": "${workspaceFolder}/website/api"
       }
     }
   ]

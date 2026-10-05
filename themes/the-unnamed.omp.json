@@ -6,7 +6,7 @@
       "segments": [
         {
           "foreground": "#15C2CB",
-          "properties": {
+          "options": {
             "style": "folder"
           },
           "style": "plain",
@@ -15,11 +15,11 @@
         },
         {
           "foreground": "#F141A8",
-          "properties": {
+          "options": {
             "branch_icon": "\ue0a0 "
           },
           "style": "plain",
-          "template": "<#F3EFF5>on</> {{ .HEAD }}{{ .BranchStatus }}{{ if .Working.Changed }} \uf044 {{ .Working.String }}{{ end }}{{ if and (.Working.Changed) (.Staging.Changed) }} |{{ end }}{{ if .Staging.Changed }} \uf046 {{ .Staging.String }}{{ end }} ",
+          "template": "<#F3EFF5>on</> {{ .HEAD }}{{if .BranchStatus }} {{ .BranchStatus }}{{ end }}{{ if .Working.Changed }} \uf044 {{ .Working.String }}{{ end }}{{ if and (.Working.Changed) (.Staging.Changed) }} |{{ end }}{{ if .Staging.Changed }} \uf046 {{ .Staging.String }}{{ end }} ",
           "type": "git"
         },
         {
@@ -30,9 +30,6 @@
         },
         {
           "foreground": "#44FFD2",
-          "properties": {
-            "fetch_version": true
-          },
           "style": "plain",
           "template": "<#F3EFF5>via</> \ue718 {{ .Full }} ",
           "type": "node"
@@ -60,5 +57,5 @@
       "type": "prompt"
     }
   ],
-  "version": 2
+  "version": 4
 }

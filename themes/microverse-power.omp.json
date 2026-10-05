@@ -30,7 +30,7 @@
           "background": "#242424",
           "foreground": "#FFBB00",
           "powerline_symbol": "\ue0b0",
-          "properties": {
+          "options": {
             "time_format": "2006-01-02 15:04:05"
           },
           "style": "powerline",
@@ -41,7 +41,7 @@
           "background": "#242424",
           "foreground": "#33DD2D",
           "powerline_symbol": "\ue0b0",
-          "properties": {
+          "options": {
             "folder_separator_icon": "/",
             "style": "full"
           },
@@ -53,12 +53,8 @@
           "background": "#242424",
           "foreground": "#3A86FF",
           "powerline_symbol": "\ue0b0",
-          "properties": {
-            "fetch_stash_count": true,
-            "fetch_upstream_icon": true
-          },
           "style": "powerline",
-          "template": "{{ .UpstreamIcon }}{{ .HEAD }}{{ if gt .StashCount 0 }} \uf692 {{ .StashCount }}{{ end }} ",
+          "template": "{{ .UpstreamIcon }}{{ .HEAD }}{{ if gt .StashCount 0 }} \ueb4b {{ .StashCount }}{{ end }} ",
           "type": "git"
         },
         {
@@ -68,12 +64,12 @@
           ],
           "foreground": "#242424",
           "powerline_symbol": "\ue0b0",
-          "properties": {
+          "options": {
             "always_enabled": true
           },
           "style": "powerline",
-          "template": " \ufc8d ",
-          "type": "exit"
+          "template": " \uea6c ",
+          "type": "status"
         }
       ],
       "type": "prompt"
@@ -92,5 +88,5 @@
       "type": "prompt"
     }
   ],
-  "version": 2
+  "version": 4
 }

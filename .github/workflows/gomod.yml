@@ -2,6 +2,10 @@ name: Go Mod
 
 on: [pull_request]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   go-mod:
     runs-on: ubuntu-latest
@@ -9,16 +13,14 @@ jobs:
       run:
         working-directory: ${{ github.workspace }}/src
     steps:
-    - name: Install Go
-      uses: actions/setup-go@v2
-      with:
-        go-version: 1.18
     - name: Checkout code
-      uses: actions/checkout@v2
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+    - name: Install Go 🗳
+      uses: ./.github/workflows/composite/bootstrap-go
     - name: Check for unused dependencies
       run: |
         go mod tidy
-        if [ "$(git status | grep -c "nothing to commit, working tree clean")" == "1" ]; then
+        if [ "$(git status | grep -c "nothing to commit, working tree clean")" -eq 1 ]; then
           echo "Nothing to tidy"
           exit 0
         fi

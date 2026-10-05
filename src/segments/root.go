@@ -1,13 +1,7 @@
 package segments
 
-import (
-	"oh-my-posh/environment"
-	"oh-my-posh/properties"
-)
-
 type Root struct {
-	props properties.Properties
-	env   environment.Environment
+	Base
 }
 
 func (rt *Root) Template() string {
@@ -16,9 +10,4 @@ func (rt *Root) Template() string {
 
 func (rt *Root) Enabled() bool {
 	return rt.env.Root()
-}
-
-func (rt *Root) Init(props properties.Properties, env environment.Environment) {
-	rt.props = props
-	rt.env = env
 }

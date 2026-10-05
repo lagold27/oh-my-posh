@@ -1,92 +1,86 @@
 package segments
 
 import (
-	"encoding/json"
-	"oh-my-posh/environment"
-	"oh-my-posh/properties"
+	"errors"
+	httplib "net/http"
+
+	"github.com/jandedobbeleer/oh-my-posh/src/cache"
+	"github.com/jandedobbeleer/oh-my-posh/src/cli/auth"
+	"github.com/jandedobbeleer/oh-my-posh/src/runtime/http"
+	"github.com/jandedobbeleer/oh-my-posh/src/segments/options"
+)
+
+const (
+	ytmdaStatusURL = auth.YTMDABASEURL + "/state"
 )
 
 type Ytm struct {
-	props properties.Properties
-	env   environment.Environment
+	Base
 
 	MusicPlayer
 }
-
-const (
-	// APIURL is the YTMDA Remote Control API URL property.
-	APIURL properties.Property = "api_url"
-)
 
 func (y *Ytm) Template() string {
 	return " {{ .Icon }}{{ if ne .Status \"stopped\" }}{{ .Artist }} - {{ .Track }}{{ end }} "
 }
 
 func (y *Ytm) Enabled() bool {
-	err := y.setStatus()
-	// If we don't get a response back (error), the user isn't running
-	// YTMDA, or they don't have the RC API enabled.
-	return err == nil
-}
-
-func (y *Ytm) Init(props properties.Properties, env environment.Environment) {
-	y.props = props
-	y.env = env
+	return y.Enable(y.setStatus)
 }
 
 type ytmdaStatusResponse struct {
-	player `json:"player"`
-	track  `json:"track"`
-}
-
-type player struct {
-	HasSong                     bool    `json:"hasSong"`
-	IsPaused                    bool    `json:"isPaused"`
-	VolumePercent               int     `json:"volumePercent"`
-	SeekbarCurrentPosition      int     `json:"seekbarCurrentPosition"`
-	SeekbarCurrentPositionHuman string  `json:"seekbarCurrentPositionHuman"`
-	StatePercent                float64 `json:"statePercent"`
-	LikeStatus                  string  `json:"likeStatus"`
-	RepeatType                  string  `json:"repeatType"`
-}
-
-type track struct {
-	Author          string `json:"author"`
-	Title           string `json:"title"`
-	Album           string `json:"album"`
-	Cover           string `json:"cover"`
-	Duration        int    `json:"duration"`
-	DurationHuman   string `json:"durationHuman"`
-	URL             string `json:"url"`
-	ID              string `json:"id"`
-	IsVideo         bool   `json:"isVideo"`
-	IsAdvertisement bool   `json:"isAdvertisement"`
-	InLibrary       bool   `json:"inLibrary"`
+	Video struct {
+		Author string `json:"author"`
+		Title  string `json:"title"`
+	} `json:"video"`
+	Player struct {
+		TrackState int  `json:"trackState"`
+		AdPlaying  bool `json:"adPlaying"`
+	} `json:"player"`
 }
 
 func (y *Ytm) setStatus() error {
-	// https://github.com/ytmdesktop/ytmdesktop/wiki/Remote-Control-API
-	url := y.props.GetString(APIURL, "http://127.0.0.1:9863")
-	httpTimeout := y.props.GetInt(APIURL, DefaultHTTPTimeout)
-	body, err := y.env.HTTPRequest(url+"/query", httpTimeout)
+	token, OK := cache.Device.Get[string](auth.YTMDATOKEN)
+	if !OK || token == "" {
+		return errors.New("YTMDA token not found, please authenticate using `oh-my-posh auth ytmda`")
+	}
+
+	status, err := y.requestStatus(token)
 	if err != nil {
 		return err
 	}
-	q := new(ytmdaStatusResponse)
-	err = json.Unmarshal(body, &q)
-	if err != nil {
-		return err
-	}
-	y.Status = playing
-	y.Icon = y.props.GetString(PlayingIcon, "\uE602 ")
-	if !q.player.HasSong {
+
+	switch status.Player.TrackState {
+	case 1, 2: // playing or buffering
+		y.Status = playing
+	case -1: // stopped
 		y.Status = stopped
-		y.Icon = y.props.GetString(StoppedIcon, "\uF04D ")
-	} else if q.player.IsPaused {
+	default: // paused
 		y.Status = paused
-		y.Icon = y.props.GetString(PausedIcon, "\uF8E3 ")
 	}
-	y.Artist = q.track.Author
-	y.Track = q.track.Title
+
+	if status.Player.AdPlaying {
+		y.Status = ad
+	}
+
+	y.Artist = status.Video.Author
+	y.Track = status.Video.Title
+	y.resolveIcon(y.options)
+
 	return nil
+}
+
+func (y *Ytm) requestStatus(token string) (*ytmdaStatusResponse, error) {
+	setHeaders := func(request *httplib.Request) {
+		request.Header.Set("Authorization", token)
+		request.Header.Set("Content-Type", "application/json")
+	}
+
+	request := &http.Request{
+		Env:         y.env,
+		HTTPTimeout: y.options.Int(options.HTTPTimeout, 5000),
+	}
+
+	status, err := request.Do[ytmdaStatusResponse](ytmdaStatusURL, nil, setHeaders)
+	return &status, err
 }

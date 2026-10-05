@@ -7,12 +7,12 @@
         {
           "foreground": "#F5F5F5",
           "style": "plain",
-          "template": "\ufb26 ",
+          "template": "\ue7ad ",
           "type": "text"
         },
         {
           "foreground": "#B80101",
-          "properties": {
+          "options": {
             "style": "agnoster"
           },
           "style": "plain",
@@ -29,5 +29,5 @@
       "type": "prompt"
     }
   ],
-  "version": 2
+  "version": 4
 }

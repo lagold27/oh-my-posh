@@ -1,24 +1,29 @@
 package segments
 
 import (
-	"oh-my-posh/environment"
-	"oh-my-posh/mock"
-	"oh-my-posh/properties"
+	"fmt"
 	"testing"
+
+	"github.com/jandedobbeleer/oh-my-posh/src/cache"
+	"github.com/jandedobbeleer/oh-my-posh/src/runtime"
+	"github.com/jandedobbeleer/oh-my-posh/src/runtime/mock"
+	"github.com/jandedobbeleer/oh-my-posh/src/segments/options"
+	"github.com/jandedobbeleer/oh-my-posh/src/template"
 
 	"github.com/stretchr/testify/assert"
 )
 
 func TestSessionSegmentTemplate(t *testing.T) {
 	cases := []struct {
-		Case            string
-		ExpectedString  string
-		UserName        string
-		DefaultUserName string
-		ComputerName    string
-		SSHSession      bool
-		Root            bool
-		Template        string
+		Case           string
+		ExpectedString string
+		UserName       string
+		ComputerName   string
+		Template       string
+		WhoAmI         string
+		Platform       string
+		SSHSession     bool
+		Root           bool
 	}{
 		{
 			Case:           "user and computer",
@@ -67,52 +72,58 @@ func TestSessionSegmentTemplate(t *testing.T) {
 			Root:           true,
 		},
 		{
-			Case:            "default user not equal",
-			ExpectedString:  "john",
-			UserName:        "john",
-			DefaultUserName: "jack",
-			SSHSession:      true,
-			ComputerName:    "remote",
-			Root:            true,
-			Template:        "{{if ne .Env.POSH_SESSION_DEFAULT_USER .UserName}}{{.UserName}}{{end}}",
+			Case:           "user with ssh using who am i",
+			ExpectedString: "john on remote",
+			UserName:       "john",
+			SSHSession:     false,
+			WhoAmI:         "sascha   pts/1        2023-11-08 22:56 (89.246.1.1)",
+			ComputerName:   "remote",
+			Template:       "{{.UserName}}{{if .SSHSession}} on {{.HostName}}{{end}}",
 		},
 		{
-			Case:            "default user equal",
-			ExpectedString:  "",
-			UserName:        "john",
-			DefaultUserName: "john",
-			SSHSession:      true,
-			ComputerName:    "remote",
-			Root:            true,
-			Template:        "{{if ne .Env.POSH_SESSION_DEFAULT_USER .UserName}}{{.UserName}}{{end}}",
+			Case:           "user with ssh using who am i (windows)",
+			ExpectedString: "john",
+			UserName:       "john",
+			SSHSession:     false,
+			WhoAmI:         "sascha   pts/1        2023-11-08 22:56 (89.246.1.1)",
+			Platform:       runtime.WINDOWS,
+			ComputerName:   "remote",
+			Template:       "{{.UserName}}{{if .SSHSession}} on {{.HostName}}{{end}}",
 		},
 	}
 
 	for _, tc := range cases {
-		env := new(mock.MockedEnvironment)
+		env := new(mock.Environment)
 		env.On("User").Return(tc.UserName)
 		env.On("GOOS").Return("burp")
 		env.On("Host").Return(tc.ComputerName, nil)
+
 		var SSHSession string
 		if tc.SSHSession {
 			SSHSession = "zezzion"
 		}
+
 		env.On("Getenv", "SSH_CONNECTION").Return(SSHSession)
 		env.On("Getenv", "SSH_CLIENT").Return(SSHSession)
-		env.On("TemplateCache").Return(&environment.TemplateCache{
+
+		env.On("Platform").Return(tc.Platform)
+
+		var whoAmIErr error
+		if tc.WhoAmI == "" {
+			whoAmIErr = fmt.Errorf("who am i error")
+		}
+
+		env.On("RunCommand", "who", []string{"am", "i"}).Return(tc.WhoAmI, whoAmIErr)
+
+		session := &Session{}
+		session.Init(options.Map{}, env)
+
+		template.Cache = &cache.Template{
 			UserName: tc.UserName,
 			HostName: tc.ComputerName,
-			Env: map[string]string{
-				"SSH_CONNECTION":            SSHSession,
-				"SSH_CLIENT":                SSHSession,
-				"POSH_SESSION_DEFAULT_USER": tc.DefaultUserName,
-			},
-			Root: tc.Root,
-		})
-		session := &Session{
-			env:   env,
-			props: properties.Map{},
+			Root:     tc.Root,
 		}
+
 		_ = session.Enabled()
 		assert.Equal(t, tc.ExpectedString, renderTemplate(env, tc.Template, session), tc.Case)
 	}

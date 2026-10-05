@@ -13,16 +13,15 @@
         {
           "foreground": "#42a9ff",
           "style": "plain",
-          "properties": {
+          "options": {
             "style": "full"
           },
           "template": "{{ .Path }} ",
           "type": "path"
         },
         {
-          "properties": {
-            "branch_icon": "",
-            "fetch_status": true
+          "options": {
+            "branch_icon": ""
           },
           "style": "plain",
           "template": "git:{{ if or (.Working.Changed) (.Staging.Changed) (gt .StashCount 0) }}<#ffdd86>{{ .HEAD }}</>{{ else }}{{ .HEAD }}{{ end }}{{ if .Staging.Changed }} <#98c379>{{ .Staging.String }}</>{{ end }}{{ if .Working.Changed }} <#d16971>{{ .Working.String }}</>{{ end }}",
@@ -40,16 +39,16 @@
           "foreground_templates": [
             "{{ if gt .Code 0 }}#42a9ff{{ end }}"
           ],
-          "properties": {
+          "options": {
             "always_enabled": true
           },
           "style": "plain",
           "template": "> ",
-          "type": "exit"
+          "type": "status"
         }
       ],
       "type": "prompt"
     }
   ],
-  "version": 2
+  "version": 4
 }

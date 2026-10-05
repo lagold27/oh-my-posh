@@ -24,7 +24,7 @@
           "background": "#242424",
           "foreground": "#FFBB00",
           "powerline_symbol": "\ue0c4",
-          "properties": {
+          "options": {
             "time_format": "15:04:05"
           },
           "style": "powerline",
@@ -35,7 +35,7 @@
           "background": "#242424",
           "foreground": "#33DD2D",
           "powerline_symbol": "\ue0b0",
-          "properties": {
+          "options": {
             "folder_separator_icon": "/",
             "style": "folder"
           },
@@ -47,13 +47,8 @@
           "background": "#242424",
           "foreground": "#3A86FF",
           "powerline_symbol": "\ue0b0",
-          "properties": {
-            "fetch_stash_count": true,
-            "fetch_status": true,
-            "fetch_upstream_icon": true
-          },
           "style": "powerline",
-          "template": "{{ .UpstreamIcon }}{{ .HEAD }}{{ if .Staging.Changed }} \uf046 {{ .Staging.String }}{{ end }}{{ if and (.Working.Changed) (.Staging.Changed) }} |{{ end }}{{ if .Working.Changed }} \uf044 {{ .Working.String }}{{ end }}{{ if gt .StashCount 0 }} \uf692 {{ .StashCount }}{{ end }} ",
+          "template": "{{ .UpstreamIcon }}{{ .HEAD }}{{ if .Staging.Changed }} \uf046 {{ .Staging.String }}{{ end }}{{ if and (.Working.Changed) (.Staging.Changed) }} |{{ end }}{{ if .Working.Changed }} \uf044 {{ .Working.String }}{{ end }}{{ if gt .StashCount 0 }} \ueb4b {{ .StashCount }}{{ end }} ",
           "type": "git"
         },
         {
@@ -68,12 +63,12 @@
           "background": "#8800dd",
           "foreground": "#ffffff",
           "powerline_symbol": "\ue0c4",
-          "properties": {
+          "options": {
             "style": "austin",
             "threshold": 1
           },
           "style": "powerline",
-          "template": " <#fefefe>\ufbab</> {{ .FormattedMs }} ",
+          "template": " <#fefefe>\ueba2</> {{ .FormattedMs }} ",
           "type": "executiontime"
         },
         {
@@ -84,8 +79,8 @@
           "foreground": "#242424",
           "powerline_symbol": "\ue0b4",
           "style": "powerline",
-          "template": " \uf7d4 ",
-          "type": "exit"
+          "template": " \ueb05 ",
+          "type": "status"
         }
       ],
       "type": "prompt"
@@ -105,5 +100,5 @@
     }
   ],
   "console_title_template": "{{if .Root}}(Admin) {{end}}{{.Folder}}",
-  "version": 2
+  "version": 4
 }

@@ -9,7 +9,7 @@
           "foreground": "#ffffff",
           "leading_diamond": "\ue0b6",
           "style": "diamond",
-          "template": " {{ if .SSHSession }}\uf817 {{ end }}{{ .UserName }}@{{ .HostName }} ",
+          "template": " {{ if .SSHSession }}\ueba9 {{ end }}{{ .UserName }}@{{ .HostName }} ",
           "trailing_diamond": "\ue0b0",
           "type": "session"
         },
@@ -17,7 +17,7 @@
           "background": "#ff479c",
           "foreground": "#ffffff",
           "powerline_symbol": "\ue0b0",
-          "properties": {
+          "options": {
             "style": "folder"
           },
           "style": "powerline",
@@ -34,14 +34,8 @@
           ],
           "foreground": "#193549",
           "powerline_symbol": "\ue0b0",
-          "properties": {
-            "branch_max_length": 25,
-            "fetch_stash_count": true,
-            "fetch_status": true,
-            "fetch_upstream_icon": true
-          },
           "style": "powerline",
-          "template": " {{ .UpstreamIcon }}{{ .HEAD }}{{ .BranchStatus }}{{ if .Working.Changed }} \uf044 {{ .Working.String }}{{ end }}{{ if and (.Working.Changed) (.Staging.Changed) }} |{{ end }}{{ if .Staging.Changed }} \uf046 {{ .Staging.String }}{{ end }}{{ if gt .StashCount 0 }} \uf692 {{ .StashCount }}{{ end }} ",
+          "template": " {{ .UpstreamIcon }}{{ .HEAD }}{{if .BranchStatus }} {{ .BranchStatus }}{{ end }}{{ if .Working.Changed }} \uf044 {{ .Working.String }}{{ end }}{{ if and (.Working.Changed) (.Staging.Changed) }} |{{ end }}{{ if .Staging.Changed }} \uf046 {{ .Staging.String }}{{ end }}{{ if gt .StashCount 0 }} \ueb4b {{ .StashCount }}{{ end }} ",
           "type": "git"
         },
         {
@@ -51,13 +45,13 @@
           ],
           "foreground": "#ffffff",
           "leading_diamond": "<transparent,background>\ue0b0</>",
-          "properties": {
+          "options": {
             "always_enabled": true
           },
           "style": "diamond",
-          "template": " \ue23a {{ if gt .Code 0 }}\uf00d {{ .Meaning }}{{ else }}\uf42e{{ end }} ",
+          "template": " \ue23a {{ if gt .Code 0 }}\uf00d {{ reason .Code }}{{ else }}\uf42e{{ end }} ",
           "trailing_diamond": "\ue0b4",
-          "type": "exit"
+          "type": "status"
         }
       ],
       "type": "prompt"
@@ -82,10 +76,10 @@
           "foreground": "#ffffff",
           "invert_powerline": true,
           "powerline_symbol": "\ue0b2",
-          "properties": {
+          "options": {
             "charged_icon": "\ue22f ",
-            "charging_icon": "\uf583 ",
-            "discharging_icon": "\uf582 "
+            "charging_icon": "\ueb2d ",
+            "discharging_icon": "\uf244 "
           },
           "style": "powerline",
           "template": " {{ if not .Error }}{{ .Icon }}{{ .Percentage }}{{ end }}{{ .Error }}\uf295 ",
@@ -97,7 +91,7 @@
           "invert_powerline": true,
           "leading_diamond": "\ue0b2",
           "style": "diamond",
-          "template": " {{ .CurrentDate | date .Format }} ",
+          "template": " \ue641 {{ .CurrentDate | date .Format }} ",
           "trailing_diamond": "\ue0b4",
           "type": "time"
         }
@@ -113,7 +107,7 @@
           "foreground": "#000000",
           "leading_diamond": "\ue0b6",
           "style": "diamond",
-          "template": " \ufd31 Kubernetes {{.Context}} cluster {{if .Namespace}}- {{.Namespace}} namespace{{end}} ",
+          "template": " \uf308 Kubernetes {{.Context}} cluster {{if .Namespace}}- {{.Namespace}} namespace{{end}} ",
           "trailing_diamond": "\ue0b0",
           "type": "kubectl"
         },
@@ -122,7 +116,7 @@
           "foreground": "#000000",
           "powerline_symbol": "\ue0b0",
           "style": "powerline",
-          "template": " \ufd03 Subscription {{ .Name }} ({{ if .EnvironmentName | contains \"AzureCloud\" }}{{ \"Global\" }}{{ else }}{{ .EnvironmentName }}{{ end }}) ",
+          "template": " \uebd8 Subscription {{ .Name }} ({{ if .EnvironmentName | contains \"AzureCloud\" }}{{ \"Global\" }}{{ else }}{{ .EnvironmentName }}{{ end }}) ",
           "type": "az"
         }
       ],
@@ -144,5 +138,5 @@
   ],
   "console_title_template": "{{ .Shell }} in {{ .Folder }}",
   "final_space": true,
-  "version": 2
+  "version": 4
 }

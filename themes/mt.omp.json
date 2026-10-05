@@ -16,7 +16,7 @@
           "background": "#FFFF00",
           "foreground": "#000000",
           "powerline_symbol": "\ue0b0",
-          "properties": {
+          "options": {
             "style": "folder"
           },
           "style": "powerline",
@@ -27,14 +27,11 @@
           "background": "#4E44FF",
           "foreground": "#ffffff",
           "powerline_symbol": "\ue0b0",
-          "properties": {
-            "branch_icon": "",
-            "fetch_stash_count": true,
-            "fetch_status": false,
-            "fetch_upstream_icon": true
+          "options": {
+            "branch_icon": ""
           },
           "style": "powerline",
-          "template": " \u279c ({{ .UpstreamIcon }}{{ .HEAD }}{{ if gt .StashCount 0 }} \uf692 {{ .StashCount }}{{ end }}) ",
+          "template": " \u279c ({{ .UpstreamIcon }}{{ .HEAD }}{{ if gt .StashCount 0 }} \ueb4b {{ .StashCount }}{{ end }}) ",
           "type": "git"
         },
         {
@@ -48,7 +45,7 @@
         {
           "background": "#16C60C",
           "foreground": "#ffffff",
-          "properties": {
+          "options": {
             "time_format": "15:04"
           },
           "style": "diamond",
@@ -61,5 +58,5 @@
     }
   ],
   "final_space": true,
-  "version": 2
+  "version": 4
 }

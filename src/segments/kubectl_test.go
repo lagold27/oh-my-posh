@@ -2,43 +2,49 @@ package segments
 
 import (
 	"fmt"
-	"io/ioutil"
-	"oh-my-posh/environment"
-	"oh-my-posh/mock"
-	"oh-my-posh/properties"
+	"os"
 	"path/filepath"
 	"testing"
+
+	"github.com/jandedobbeleer/oh-my-posh/src/runtime"
+	"github.com/jandedobbeleer/oh-my-posh/src/runtime/mock"
+	"github.com/jandedobbeleer/oh-my-posh/src/segments/options"
 
 	"github.com/stretchr/testify/assert"
 )
 
-const testKubectlAllInfoTemplate = "{{.Context}} :: {{.Namespace}} :: {{.User}} :: {{.Cluster}}"
+const (
+	testKubectlAllInfoTemplate = "{{.Context}} :: {{.Namespace}} :: {{.User}} :: {{.Cluster}}"
+	contextMarker              = "currentcontextmarker"
+)
 
 func TestKubectlSegment(t *testing.T) {
 	standardTemplate := "{{.Context}}{{if .Namespace}} :: {{.Namespace}}{{end}}"
 	lsep := string(filepath.ListSeparator)
 
 	cases := []struct {
-		Case            string
-		Template        string
-		DisplayError    bool
-		KubectlExists   bool
+		Files           map[string]string
+		ContextAliases  map[string]string
+		ClusterAliases  map[string]string
+		Cluster         string
 		Kubeconfig      string
-		ParseKubeConfig bool
 		Context         string
 		Namespace       string
 		UserName        string
-		Cluster         string
+		Case            string
+		ExpectedString  string
+		Template        string
+		KubectlExists   bool
+		ParseKubeConfig bool
 		KubectlErr      bool
 		ExpectedEnabled bool
-		ExpectedString  string
-		Files           map[string]string
+		DisplayError    bool
 	}{
 		{
 			Case:            "kubeconfig incomplete",
 			Template:        testKubectlAllInfoTemplate,
 			ParseKubeConfig: true,
-			Kubeconfig:      "currentcontextmarker" + lsep + "contextdefinitionincomplete",
+			Kubeconfig:      contextMarker + lsep + "contextdefinitionincomplete",
 			Files:           testKubeConfigFiles,
 			ExpectedString:  "ctx ::  ::  ::",
 			ExpectedEnabled: true,
@@ -56,6 +62,16 @@ func TestKubectlSegment(t *testing.T) {
 			ExpectedEnabled: true,
 		},
 		{Case: "no namespace", Template: standardTemplate, KubectlExists: true, Context: "aaa", ExpectedString: "aaa", ExpectedEnabled: true},
+		{
+			Case:            "kubectl context alias",
+			Template:        standardTemplate,
+			KubectlExists:   true,
+			Context:         "aaa",
+			Namespace:       "bbb",
+			ContextAliases:  map[string]string{"aaa": "ccc"},
+			ExpectedString:  "ccc :: bbb",
+			ExpectedEnabled: true,
+		},
 		{
 			Case:            "kubectl error",
 			Template:        standardTemplate,
@@ -77,10 +93,75 @@ func TestKubectlSegment(t *testing.T) {
 			ExpectedEnabled: true,
 		},
 		{
+			Case:            "kubeconfig context alias",
+			Template:        standardTemplate,
+			ParseKubeConfig: true,
+			Files:           testKubeConfigFiles,
+			ContextAliases:  map[string]string{"aaa": "ccc"},
+			ExpectedString:  "ccc :: bbb",
+			ExpectedEnabled: true,
+		},
+		{
+			Case:            "kubectl cluster alias",
+			Template:        testKubectlAllInfoTemplate,
+			KubectlExists:   true,
+			Context:         "aaa",
+			Namespace:       "bbb",
+			UserName:        "ccc",
+			Cluster:         "ddd",
+			ClusterAliases:  map[string]string{"ddd": "production"},
+			ExpectedString:  "aaa :: bbb :: ccc :: production",
+			ExpectedEnabled: true,
+		},
+		{
+			Case:            "kubeconfig cluster alias",
+			Template:        testKubectlAllInfoTemplate,
+			ParseKubeConfig: true,
+			Files:           testKubeConfigFiles,
+			ClusterAliases:  map[string]string{"ddd": "prod"},
+			ExpectedString:  "aaa :: bbb :: ccc :: prod",
+			ExpectedEnabled: true,
+		},
+		{
+			Case:            "kubeconfig context and cluster alias",
+			Template:        testKubectlAllInfoTemplate,
+			ParseKubeConfig: true,
+			Files:           testKubeConfigFiles,
+			ContextAliases:  map[string]string{"aaa": "my-context"},
+			ClusterAliases:  map[string]string{"ddd": "my-cluster"},
+			ExpectedString:  "my-context :: bbb :: ccc :: my-cluster",
+			ExpectedEnabled: true,
+		},
+		{
+			// context_aliases/cluster_aliases are user configuration and may
+			// carry <...> anchors, unlike the raw kubeconfig-sourced names.
+			Case:            "kubeconfig context and cluster alias with markup",
+			Template:        testKubectlAllInfoTemplate,
+			ParseKubeConfig: true,
+			Files:           testKubeConfigFiles,
+			ContextAliases:  map[string]string{"aaa": "<p:blue>ctx</>"},
+			ClusterAliases:  map[string]string{"ddd": "<p:green>cluster</>"},
+			ExpectedString:  "<p:blue>ctx</> :: bbb :: ccc :: <p:green>cluster</>",
+			ExpectedEnabled: true,
+		},
+		{
+			// an unaliased context/cluster name is not user configuration: its
+			// chevrons must be escaped so the writer cannot parse them as anchors.
+			Case:            "kubectl context with anchor-shaped text is escaped",
+			Template:        testKubectlAllInfoTemplate,
+			KubectlExists:   true,
+			Context:         "<red>pwned",
+			Namespace:       "bbb",
+			UserName:        "ccc",
+			Cluster:         "ddd",
+			ExpectedString:  "<<>red<>>pwned :: bbb :: ccc :: ddd",
+			ExpectedEnabled: true,
+		},
+		{
 			Case:            "kubeconfig multiple current marker first",
 			Template:        testKubectlAllInfoTemplate,
 			ParseKubeConfig: true,
-			Kubeconfig:      "" + lsep + "currentcontextmarker" + lsep + "contextdefinition" + lsep + "contextredefinition",
+			Kubeconfig:      "" + lsep + contextMarker + lsep + "contextdefinition" + lsep + "contextredefinition",
 			Files:           testKubeConfigFiles,
 			ExpectedString:  "ctx :: ns :: usr :: cl",
 			ExpectedEnabled: true,
@@ -88,7 +169,7 @@ func TestKubectlSegment(t *testing.T) {
 		{
 			Case:     "kubeconfig multiple context first",
 			Template: testKubectlAllInfoTemplate, ParseKubeConfig: true,
-			Kubeconfig:      "contextdefinition" + lsep + "contextredefinition" + lsep + "currentcontextmarker" + lsep,
+			Kubeconfig:      "contextdefinition" + lsep + "contextredefinition" + lsep + contextMarker + lsep,
 			Files:           testKubeConfigFiles,
 			ExpectedString:  "ctx :: ns :: usr :: cl",
 			ExpectedEnabled: true,
@@ -108,34 +189,42 @@ func TestKubectlSegment(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		env := new(mock.MockedEnvironment)
+		env := new(mock.Environment)
 		env.On("HasCommand", "kubectl").Return(tc.KubectlExists)
+
 		var kubeconfig string
-		content, err := ioutil.ReadFile("../test/kubectl.yml")
+		content, err := os.ReadFile("../test/kubectl.yml")
 		if err == nil {
 			kubeconfig = fmt.Sprintf(string(content), tc.Cluster, tc.UserName, tc.Namespace, tc.Context)
 		}
+
 		var kubectlErr error
 		if tc.KubectlErr {
-			kubectlErr = &environment.CommandError{
+			kubectlErr = &runtime.CommandError{
 				Err:      "oops",
 				ExitCode: 1,
 			}
 		}
+
 		env.On("RunCommand", "kubectl", []string{"config", "view", "--output", "yaml", "--minify"}).Return(kubeconfig, kubectlErr)
 		env.On("Getenv", "KUBECONFIG").Return(tc.Kubeconfig)
+
 		for path, content := range tc.Files {
 			env.On("FileContent", path).Return(content)
 		}
+
 		env.On("Home").Return("testhome")
 
-		k := &Kubectl{
-			env: env,
-			props: properties.Map{
-				properties.DisplayError: tc.DisplayError,
-				ParseKubeConfig:         tc.ParseKubeConfig,
-			},
+		props := options.Map{
+			options.DisplayError: tc.DisplayError,
+			ParseKubeConfig:      tc.ParseKubeConfig,
+			ContextAliases:       tc.ContextAliases,
+			ClusterAliases:       tc.ClusterAliases,
 		}
+
+		k := &Kubectl{}
+		k.Init(props, env)
+
 		assert.Equal(t, tc.ExpectedEnabled, k.Enabled(), tc.Case)
 		if tc.ExpectedEnabled {
 			assert.Equal(t, tc.ExpectedString, renderTemplate(env, tc.Template, k), tc.Case)
@@ -163,7 +252,7 @@ contexts:
       namespace: ns
     name: ctx
 `,
-	"currentcontextmarker": `
+	contextMarker: `
 apiVersion: v1
 current-context: ctx
 `,
