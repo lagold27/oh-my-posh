@@ -1,11 +1,13 @@
 package segments
 
 import (
+	"encoding/json"
 	"errors"
-	"oh-my-posh/mock"
-	"oh-my-posh/properties"
-	"oh-my-posh/template"
 	"testing"
+
+	"github.com/jandedobbeleer/oh-my-posh/src/runtime/mock"
+	"github.com/jandedobbeleer/oh-my-posh/src/segments/options"
+	"github.com/jandedobbeleer/oh-my-posh/src/template"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -16,19 +18,19 @@ const (
 
 func TestNSSegment(t *testing.T) {
 	cases := []struct {
+		Error           error
 		Case            string
 		JSONResponse    string
 		ExpectedString  string
-		ExpectedEnabled bool
-		CacheTimeout    int
-		CacheFoundFail  bool
 		Template        string
-		Error           error
+		CacheTimeout    int
+		ExpectedEnabled bool
+		CacheFoundFail  bool
 	}{
 		{
 			Case: "Flat 150",
 			JSONResponse: `
-			[{"_id":"619d6fa819696e8ded5b2206","sgv":150,"date":1637707537000,"dateString":"2021-11-23T22:45:37.000Z","trend":4,"direction":"Flat","device":"share2","type":"sgv","utcOffset":0,"sysTime":"2021-11-23T22:45:37.000Z","mills":1637707537000}]`, // nolint:lll
+			[{"_id":"619d6fa819696e8ded5b2206","sgv":150,"date":1637707537000,"dateString":"2021-11-23T22:45:37.000Z","trend":4,"direction":"Flat","device":"share2","type":"sgv","utcOffset":0,"sysTime":"2021-11-23T22:45:37.000Z","mills":1637707537000}]`, //nolint:lll
 			Template:        "\ue2a1 {{.Sgv}}{{.TrendIcon}}",
 			ExpectedString:  "\ue2a1 150→",
 			ExpectedEnabled: true,
@@ -36,7 +38,7 @@ func TestNSSegment(t *testing.T) {
 		{
 			Case: "DoubleDown 50",
 			JSONResponse: `
-			[{"_id":"619d6fa819696e8ded5b2206","sgv":50,"date":1637707537000,"dateString":"2021-11-23T22:45:37.000Z","trend":4,"direction":"DoubleDown","device":"share2","type":"sgv","utcOffset":0,"sysTime":"2021-11-23T22:45:37.000Z","mills":1637707537000}]`, // nolint:lll
+			[{"_id":"619d6fa819696e8ded5b2206","sgv":50,"date":1637707537000,"dateString":"2021-11-23T22:45:37.000Z","trend":4,"direction":"DoubleDown","device":"share2","type":"sgv","utcOffset":0,"sysTime":"2021-11-23T22:45:37.000Z","mills":1637707537000}]`, //nolint:lll
 			Template:        "\ue2a1 {{.Sgv}}{{.TrendIcon}}",
 			ExpectedString:  "\ue2a1 50↓↓",
 			ExpectedEnabled: true,
@@ -44,7 +46,7 @@ func TestNSSegment(t *testing.T) {
 		{
 			Case: "DoubleUp 250",
 			JSONResponse: `
-			[{"_id":"619d6fa819696e8ded5b2206","sgv":250,"date":1637707537000,"dateString":"2021-11-23T22:45:37.000Z","trend":4,"direction":"DoubleUp","device":"share2","type":"sgv","utcOffset":0,"sysTime":"2021-11-23T22:45:37.000Z","mills":1637707537000}]`, // nolint:lll
+			[{"_id":"619d6fa819696e8ded5b2206","sgv":250,"date":1637707537000,"dateString":"2021-11-23T22:45:37.000Z","trend":4,"direction":"DoubleUp","device":"share2","type":"sgv","utcOffset":0,"sysTime":"2021-11-23T22:45:37.000Z","mills":1637707537000}]`, //nolint:lll
 			Template:        "\ue2a1 {{.Sgv}}{{.TrendIcon}}",
 			ExpectedString:  "\ue2a1 250↑↑",
 			ExpectedEnabled: true,
@@ -52,7 +54,7 @@ func TestNSSegment(t *testing.T) {
 		{
 			Case: "SingleUp 130",
 			JSONResponse: `
-			[{"_id":"619d6fa819696e8ded5b2206","sgv":130,"date":1637707537000,"dateString":"2021-11-23T22:45:37.000Z","trend":4,"direction":"SingleUp","device":"share2","type":"sgv","utcOffset":0,"sysTime":"2021-11-23T22:45:37.000Z","mills":1637707537000}]`, // nolint:lll
+			[{"_id":"619d6fa819696e8ded5b2206","sgv":130,"date":1637707537000,"dateString":"2021-11-23T22:45:37.000Z","trend":4,"direction":"SingleUp","device":"share2","type":"sgv","utcOffset":0,"sysTime":"2021-11-23T22:45:37.000Z","mills":1637707537000}]`, //nolint:lll
 			Template:        "\ue2a1 {{.Sgv}}{{.TrendIcon}}",
 			ExpectedString:  "\ue2a1 130↑",
 			ExpectedEnabled: true,
@@ -60,7 +62,7 @@ func TestNSSegment(t *testing.T) {
 		{
 			Case: "FortyFiveUp 174",
 			JSONResponse: `
-			[{"_id":"619d6fa819696e8ded5b2206","sgv":174,"date":1637707537000,"dateString":"2021-11-23T22:45:37.000Z","trend":4,"direction":"FortyFiveUp","device":"share2","type":"sgv","utcOffset":0,"sysTime":"2021-11-23T22:45:37.000Z","mills":1637707537000}]`, // nolint:lll
+			[{"_id":"619d6fa819696e8ded5b2206","sgv":174,"date":1637707537000,"dateString":"2021-11-23T22:45:37.000Z","trend":4,"direction":"FortyFiveUp","device":"share2","type":"sgv","utcOffset":0,"sysTime":"2021-11-23T22:45:37.000Z","mills":1637707537000}]`, //nolint:lll
 			Template:        "\ue2a1 {{.Sgv}}{{.TrendIcon}}",
 			ExpectedString:  "\ue2a1 174↗",
 			ExpectedEnabled: true,
@@ -68,7 +70,7 @@ func TestNSSegment(t *testing.T) {
 		{
 			Case: "FortyFiveDown 61",
 			JSONResponse: `
-			[{"_id":"619d6fa819696e8ded5b2206","sgv":61,"date":1637707537000,"dateString":"2021-11-23T22:45:37.000Z","trend":4,"direction":"FortyFiveDown","device":"share2","type":"sgv","utcOffset":0,"sysTime":"2021-11-23T22:45:37.000Z","mills":1637707537000}]`, // nolint:lll
+			[{"_id":"619d6fa819696e8ded5b2206","sgv":61,"date":1637707537000,"dateString":"2021-11-23T22:45:37.000Z","trend":4,"direction":"FortyFiveDown","device":"share2","type":"sgv","utcOffset":0,"sysTime":"2021-11-23T22:45:37.000Z","mills":1637707537000}]`, //nolint:lll
 			Template:        "\ue2a1 {{.Sgv}}{{.TrendIcon}}",
 			ExpectedString:  "\ue2a1 61↘",
 			ExpectedEnabled: true,
@@ -76,9 +78,17 @@ func TestNSSegment(t *testing.T) {
 		{
 			Case: "DoubleDown 50",
 			JSONResponse: `
-			[{"_id":"619d6fa819696e8ded5b2206","sgv":50,"date":1637707537000,"dateString":"2021-11-23T22:45:37.000Z","trend":4,"direction":"DoubleDown","device":"share2","type":"sgv","utcOffset":0,"sysTime":"2021-11-23T22:45:37.000Z","mills":1637707537000}]`, // nolint:lll
+			[{"_id":"619d6fa819696e8ded5b2206","sgv":50,"date":1637707537000,"dateString":"2021-11-23T22:45:37.000Z","trend":4,"direction":"DoubleDown","device":"share2","type":"sgv","utcOffset":0,"sysTime":"2021-11-23T22:45:37.000Z","mills":1637707537000}]`, //nolint:lll
 			Template:        "\ue2a1 {{.Sgv}}{{.TrendIcon}}",
 			ExpectedString:  "\ue2a1 50↓↓",
+			ExpectedEnabled: true,
+		},
+		{
+			Case: "Float date value",
+			JSONResponse: `
+			[{"_id":"619d6fa819696e8ded5b2206","sgv":124,"date":1770512410938.386,"dateString":"2026-02-08T01:00:10.000Z","trend":4,"direction":"Flat","device":"share2","type":"sgv","utcOffset":0,"sysTime":"2026-02-08T01:00:10.000Z","mills":1770512410000}]`, //nolint:lll
+			Template:        "\ue2a1 {{.Sgv}}{{.TrendIcon}}",
+			ExpectedString:  "\ue2a1 124→",
 			ExpectedEnabled: true,
 		},
 		{
@@ -93,32 +103,12 @@ func TestNSSegment(t *testing.T) {
 			ExpectedEnabled: false,
 		},
 		{
-			Case: "DoubleDown 50 from cache",
-			JSONResponse: `
-			[{"_id":"619d6fa819696e8ded5b2206","sgv":50,"date":1637707537000,"dateString":"2021-11-23T22:45:37.000Z","trend":4,"direction":"DoubleDown","device":"share2","type":"sgv","utcOffset":0,"sysTime":"2021-11-23T22:45:37.000Z","mills":1637707537000}]`, // nolint:lll
-			Template:        "\ue2a1 {{.Sgv}}{{.TrendIcon}}",
-			ExpectedString:  "\ue2a1 50↓↓",
-			ExpectedEnabled: true,
-			CacheTimeout:    10,
-		},
-		{
-			Case: "DoubleDown 50 from cache not found",
-			JSONResponse: `
-			[{"_id":"619d6fa819696e8ded5b2206","sgv":50,"date":1637707537000,"dateString":"2021-11-23T22:45:37.000Z","trend":4,"direction":"DoubleDown","device":"share2","type":"sgv","utcOffset":0,"sysTime":"2021-11-23T22:45:37.000Z","mills":1637707537000}]`, // nolint:lll
-			Template:        "\ue2a1 {{.Sgv}}{{.TrendIcon}}",
-			ExpectedString:  "\ue2a1 50↓↓",
-			ExpectedEnabled: true,
-			CacheTimeout:    10,
-			CacheFoundFail:  true,
-		},
-		{
 			Case: "Error parsing response",
 			JSONResponse: `
 			4tffgt4e4567`,
 			Template:        "\ue2a1 {{.Sgv}}{{.TrendIcon}}",
 			ExpectedString:  "\ue2a1 50↓↓",
 			ExpectedEnabled: false,
-			CacheTimeout:    10,
 		},
 		{
 			Case: "Faulty template",
@@ -127,28 +117,20 @@ func TestNSSegment(t *testing.T) {
 			Template:        "\ue2a1 {{.Sgv}}{{.Burp}}",
 			ExpectedString:  template.IncorrectTemplate,
 			ExpectedEnabled: true,
-			CacheTimeout:    10,
 		},
 	}
 
 	for _, tc := range cases {
-		env := &mock.MockedEnvironment{}
-		props := properties.Map{
-			CacheTimeout: tc.CacheTimeout,
-			URL:          "FAKE",
+		env := &mock.Environment{}
+		props := options.Map{
+			URL:     "FAKE",
+			Headers: map[string]string{"Fake-Header": "xxxxx"},
 		}
-
-		cache := &mock.MockedCache{}
-		cache.On("Get", FAKEAPIURL).Return(tc.JSONResponse, !tc.CacheFoundFail)
-		cache.On("Set", FAKEAPIURL, tc.JSONResponse, tc.CacheTimeout).Return()
 
 		env.On("HTTPRequest", FAKEAPIURL).Return([]byte(tc.JSONResponse), tc.Error)
-		env.On("Cache").Return(cache)
 
-		ns := &Nightscout{
-			props: props,
-			env:   env,
-		}
+		ns := &Nightscout{}
+		ns.Init(props, env)
 
 		enabled := ns.Enabled()
 		assert.Equal(t, tc.ExpectedEnabled, enabled, tc.Case)
@@ -160,5 +142,52 @@ func TestNSSegment(t *testing.T) {
 			tc.Template = ns.Template()
 		}
 		assert.Equal(t, tc.ExpectedString, renderTemplate(env, tc.Template, ns), tc.Case)
+	}
+}
+
+func TestNightscoutDataUnmarshalJSON(t *testing.T) {
+	cases := []struct {
+		Case         string
+		JSONInput    string
+		ExpectedDate int64
+		ExpectError  bool
+	}{
+		{
+			Case:         "Integer date value",
+			JSONInput:    `{"date": 1637707537000}`,
+			ExpectedDate: 1637707537000,
+		},
+		{
+			Case:         "Floating-point date value",
+			JSONInput:    `{"date": 1637707537000.5}`,
+			ExpectedDate: 1637707537000,
+		},
+		{
+			Case:         "Floating-point date with larger decimal",
+			JSONInput:    `{"date": 1637707537123.789}`,
+			ExpectedDate: 1637707537123,
+		},
+		{
+			Case:        "Invalid date value",
+			JSONInput:   `{"date": "not-a-number"}`,
+			ExpectError: true,
+		},
+		{
+			Case:      "Missing date field",
+			JSONInput: `{"sgv": 150}`,
+		},
+	}
+
+	for _, tc := range cases {
+		var data NightscoutData
+		err := json.Unmarshal([]byte(tc.JSONInput), &data)
+
+		if tc.ExpectError {
+			assert.Error(t, err, tc.Case)
+			continue
+		}
+
+		assert.NoError(t, err, tc.Case)
+		assert.Equal(t, tc.ExpectedDate, data.Date, tc.Case)
 	}
 }

@@ -1,52 +1,79 @@
+version: "2"
 run:
-  timeout: 5m
   allow-parallel-runners: true
 linters:
-  disable-all: true
+  default: none
   enable:
     - bodyclose
-    - deadcode
-    - depguard
+    - copyloopvar
     - dupl
     - errcheck
     - exhaustive
-    - gochecknoinits
     - goconst
     - gocritic
     - gocyclo
-    - gofmt
-    - goimports
-    - revive
     - goprintffuncname
-    - gosimple
     - govet
     - ineffassign
+    - lll
     - misspell
     - nakedret
     - noctx
     - nolintlint
+    - revive
     - rowserrcheck
-    - exportloopref
     - staticcheck
-    - structcheck
-    - typecheck
     - unconvert
     - unparam
     - unused
-    - varcheck
     - whitespace
-    - lll
-linters-settings:
-  gocritic:
-    enabled-tags:
-      - diagnostic
-      - experimental
-      - opinionated
-      - performance
-      - style
-    disabled-tags:
-      - experimental
-    disabled-checks:
-      - ifElseChain
-  lll:
-    line-length: 180
+  settings:
+    exhaustive:
+      default-signifies-exhaustive: true
+    goconst:
+      ignore-tests: true
+    gocritic:
+      enabled-tags:
+        - diagnostic
+        - opinionated
+        - performance
+        - style
+      disabled-tags:
+        - experimental
+    lll:
+      line-length: 180
+    revive:
+      rules:
+        - name: var-naming
+          disabled: true
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
+    rules:
+      # GetAccentColor's unix stub (colors_unix.go) always errors, so staticcheck
+      # sees the success path here as statically unreachable when analyzed under
+      # a unix GOOS - even though the darwin/windows implementations can succeed.
+      # An inline //nolint would be flagged as unused (nolintlint) on those
+      # platforms' builds, so exclude by config instead.
+      - path: cli/get.go
+        linters:
+          - staticcheck
+        text: SA4023
+formatters:
+  enable:
+    - gofmt
+    - goimports
+  exclusions:
+    generated: lax
+    paths:
+      - third_party$
+      - builtin$
+      - examples$

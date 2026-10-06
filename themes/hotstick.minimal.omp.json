@@ -14,7 +14,7 @@
           "background": "lightBlue",
           "foreground": "black",
           "leading_diamond": "\ue0b6",
-          "properties": {
+          "options": {
             "style": "mixed"
           },
           "style": "diamond",
@@ -29,15 +29,14 @@
           ],
           "foreground": "black",
           "powerline_symbol": "\ue0b0",
-          "properties": {
+          "options": {
             "branch_ahead_icon": "\u2191",
             "branch_behind_icon": "\u2193",
-            "branch_gone": "\u2262",
+            "branch_gone_icon": "\u2262",
             "branch_icon": "\ue0a0 ",
             "branch_identical_icon": "\u2261",
             "cherry_pick_icon": "\u2713 ",
             "commit_icon": "\u25b7 ",
-            "fetch_status": true,
             "merge_icon": "\u25f4 ",
             "no_commits_icon": "[no commits]",
             "rebase_icon": "\u2c62 ",
@@ -53,6 +52,5 @@
   ],
   "console_title_template": "{{.Folder}}{{if .Root}} :: root{{end}} :: {{.Shell}}",
   "final_space": true,
-  "osc99": true,
-  "version": 2
+  "version": 4
 }

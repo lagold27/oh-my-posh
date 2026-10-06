@@ -26,10 +26,10 @@
           "background": "#26BDBB",
           "foreground": "#0C212F",
           "leading_diamond": "<transparent,#26BDBB>\ue0b0</>",
-          "properties": {
-            "folder_icon": "\uf6d7",
+          "options": {
+            "folder_icon": "...",
             "folder_separator_icon": "<transparent> \ue0b1 </>",
-            "home_icon": "\uf7db",
+            "home_icon": "\ueb06",
             "style": "agnoster_short"
           },
           "style": "diamond",
@@ -47,20 +47,15 @@
           ],
           "foreground": "#FFFFFF",
           "powerline_symbol": "\ue0b0",
-          "properties": {
-            "fetch_stash_count": true,
-            "fetch_status": true,
-            "fetch_upstream_icon": true
-          },
           "style": "powerline",
-          "template": " {{ .UpstreamIcon }}{{ .HEAD }}{{ if .Staging.Changed }} \uf046 {{ .Staging.String }}{{ end }}{{ if and (.Working.Changed) (.Staging.Changed) }} |{{ end }}{{ if .Working.Changed }} \uf044 {{ .Working.String }}{{ end }}{{ if gt .StashCount 0 }} \uf692 {{ .StashCount }}{{ end }} ",
+          "template": " {{ .UpstreamIcon }}{{ .HEAD }}{{ if .Staging.Changed }} \uf046 {{ .Staging.String }}{{ end }}{{ if and (.Working.Changed) (.Staging.Changed) }} |{{ end }}{{ if .Working.Changed }} \uf044 {{ .Working.String }}{{ end }}{{ if gt .StashCount 0 }} \ueb4b {{ .StashCount }}{{ end }} ",
           "type": "git"
         },
         {
           "background": "#0C212F",
           "foreground": "#FFFFFF",
           "leading_diamond": "<transparent,#0C212F>\ue0b0</>",
-          "properties": {
+          "options": {
             "time_format": "15:04"
           },
           "style": "diamond",
@@ -72,7 +67,7 @@
           "background": "#26BDBB",
           "foreground": "#0C212F",
           "leading_diamond": "<transparent,#26BDBB>\ue0b0</>",
-          "properties": {
+          "options": {
             "style": "dallas",
             "threshold": 0
           },
@@ -86,9 +81,9 @@
           "foreground": "#ffffff",
           "leading_diamond": "<transparent,background>\ue0b0</>",
           "style": "diamond",
-          "template": "<transparent> \uf12a</> {{ .Meaning }} ",
+          "template": "<transparent> \uf12a</> {{ reason .Code }} ",
           "trailing_diamond": "\ue0b0",
-          "type": "exit"
+          "type": "status"
         }
       ],
       "type": "prompt"
@@ -96,6 +91,5 @@
   ],
   "console_title_template": "{{if .Root}} \u26a1 {{end}}{{.Folder | replace \"~\" \"🏠\"}} @ {{.HostName}}",
   "final_space": true,
-  "osc99": true,
-  "version": 2
+  "version": 4
 }

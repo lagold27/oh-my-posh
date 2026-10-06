@@ -1,28 +1,14 @@
 package template
 
 import (
-	"errors"
 	"strconv"
 	"strings"
+
+	"github.com/jandedobbeleer/oh-my-posh/src/text"
 )
 
-func parseSeconds(seconds interface{}) (int, error) {
-	switch seconds := seconds.(type) {
-	default:
-		return 0, errors.New("invalid seconds type")
-	case string:
-		return strconv.Atoi(seconds)
-	case int:
-		return seconds, nil
-	case int64:
-		return int(seconds), nil
-	case float64:
-		return int(seconds), nil
-	}
-}
-
-func secondsRound(seconds interface{}) string {
-	s, err := parseSeconds(seconds)
+func secondsRound(seconds any) string {
+	s, err := toInt(seconds)
 	if err != nil {
 		return err.Error()
 	}
@@ -42,7 +28,8 @@ func secondsRound(seconds interface{}) string {
 		month  = 2629800
 		year   = 31560000
 	)
-	var builder strings.Builder
+	builder := text.NewBuilder()
+
 	writePart := func(unit int, name string) {
 		if s >= unit {
 			builder.WriteString(" ")

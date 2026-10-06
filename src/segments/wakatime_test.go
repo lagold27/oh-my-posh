@@ -3,22 +3,23 @@ package segments
 import (
 	"errors"
 	"fmt"
-	"oh-my-posh/mock"
-	"oh-my-posh/properties"
 	"testing"
+
+	"github.com/jandedobbeleer/oh-my-posh/src/runtime/mock"
+	"github.com/jandedobbeleer/oh-my-posh/src/segments/options"
 
 	"github.com/stretchr/testify/assert"
 )
 
 func TestWTTrackedTime(t *testing.T) {
 	cases := []struct {
+		Error          error
 		Case           string
-		Seconds        int
 		Expected       string
 		Template       string
+		Seconds        int
 		CacheTimeout   int
 		CacheFoundFail bool
-		Error          error
 	}{
 		{
 			Case:     "nothing tracked",
@@ -46,48 +47,30 @@ func TestWTTrackedTime(t *testing.T) {
 			Expected: "2h 45m",
 		},
 		{
-			Case:         "cache 2h 45m",
-			Seconds:      9900,
-			Expected:     "2h 45m",
-			CacheTimeout: 20,
+			Case:     "no cache 2h 45m",
+			Seconds:  9900,
+			Expected: "2h 45m",
 		},
 		{
-			Case:           "no cache 2h 45m",
-			Seconds:        9900,
-			Expected:       "2h 45m",
-			CacheTimeout:   20,
-			CacheFoundFail: true,
-		},
-		{
-			Case:           "api error",
-			Seconds:        2,
-			Expected:       "0s",
-			CacheTimeout:   20,
-			CacheFoundFail: true,
-			Error:          errors.New("api error"),
+			Case:     "api error",
+			Seconds:  2,
+			Expected: "0s",
+			Error:    errors.New("api error"),
 		},
 	}
 
 	for _, tc := range cases {
-		env := &mock.MockedEnvironment{}
-
-		response := fmt.Sprintf(`{"cummulative_total": {"seconds": %.2f, "text": "x"}}`, float64(tc.Seconds))
+		env := &mock.Environment{}
+		response := fmt.Sprintf(`{"cumulative_total": {"seconds": %.2f, "text": "x"}}`, float64(tc.Seconds))
 
 		env.On("HTTPRequest", FAKEAPIURL).Return([]byte(response), tc.Error)
 
-		cache := &mock.MockedCache{}
-		cache.On("Get", FAKEAPIURL).Return(response, !tc.CacheFoundFail)
-		cache.On("Set", FAKEAPIURL, response, tc.CacheTimeout).Return()
-		env.On("Cache").Return(cache)
-
-		w := &Wakatime{
-			props: properties.Map{
-				APIKey:       "key",
-				CacheTimeout: tc.CacheTimeout,
-				URL:          FAKEAPIURL,
-			},
-			env: env,
+		props := options.Map{
+			URL: FAKEAPIURL,
 		}
+
+		w := &Wakatime{}
+		w.Init(props, env)
 
 		assert.ErrorIs(t, tc.Error, w.setAPIData(), tc.Case+" - Error")
 		assert.Equal(t, tc.Expected, renderTemplate(env, w.Template(), w), tc.Case+" - String")

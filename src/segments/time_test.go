@@ -1,11 +1,12 @@
 package segments
 
 import (
-	"oh-my-posh/mock"
-	"oh-my-posh/properties"
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/jandedobbeleer/oh-my-posh/src/runtime/mock"
+	"github.com/jandedobbeleer/oh-my-posh/src/segments/options"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -15,9 +16,9 @@ func TestTimeSegmentTemplate(t *testing.T) {
 	currentDate := time.Now()
 	cases := []struct {
 		Case            string
-		ExpectedEnabled bool
 		ExpectedString  string
 		Template        string
+		ExpectedEnabled bool
 	}{
 		{
 			Case:            "no template",
@@ -40,12 +41,13 @@ func TestTimeSegmentTemplate(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		env := new(mock.MockedEnvironment)
+		env := new(mock.Environment)
+
 		tempus := &Time{
-			env:         env,
-			props:       properties.Map{},
 			CurrentDate: currentDate,
 		}
+		tempus.Init(options.Map{}, env)
+
 		assert.Equal(t, tc.ExpectedEnabled, tempus.Enabled())
 		if tc.Template == "" {
 			tc.Template = tempus.Template()

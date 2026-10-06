@@ -8,7 +8,7 @@
           "background": "#003543",
           "foreground": "#fff",
           "powerline_symbol": "\ue0b0",
-          "properties": {
+          "options": {
             "windows": "\uf179"
           },
           "style": "powerline",
@@ -27,7 +27,7 @@
           "background": "#0087D8",
           "foreground": "#003544",
           "powerline_symbol": "\ue0b0",
-          "properties": {
+          "options": {
             "folder_separator_icon": "/",
             "style": "full"
           },
@@ -45,12 +45,8 @@
           ],
           "foreground": "#193549",
           "powerline_symbol": "\ue0b0",
-          "properties": {
-            "fetch_stash_count": true,
-            "fetch_status": true
-          },
           "style": "powerline",
-          "template": " {{ .HEAD }}{{ if .Staging.Changed }} \uf046 {{ .Staging.String }}{{ end }}{{ if and (.Working.Changed) (.Staging.Changed) }} |{{ end }}{{ if .Working.Changed }} \uf044 {{ .Working.String }}{{ end }}{{ if gt .StashCount 0 }} \uf692 {{ .StashCount }}{{ end }} ",
+          "template": " {{ .HEAD }}{{ if .Staging.Changed }} \uf046 {{ .Staging.String }}{{ end }}{{ if and (.Working.Changed) (.Staging.Changed) }} |{{ end }}{{ if .Working.Changed }} \uf044 {{ .Working.String }}{{ end }}{{ if gt .StashCount 0 }} \ueb4b {{ .StashCount }}{{ end }} ",
           "type": "git"
         },
         {
@@ -60,12 +56,12 @@
           ],
           "foreground": "#242424",
           "powerline_symbol": "\ue0b0",
-          "properties": {
+          "options": {
             "always_enabled": true
           },
           "style": "powerline",
-          "template": " \ufc8d ",
-          "type": "exit"
+          "template": " \uea6c ",
+          "type": "status"
         }
       ],
       "type": "prompt"
@@ -84,7 +80,7 @@
           "invert_powerline": true,
           "powerline_symbol": "\ue0b2",
           "style": "powerline",
-          "template": " {{ if not .Error }}{{ .Icon }}{{ .Percentage }}{{ end }}{{ .Error }}\uf295 \uf583 ",
+          "template": " {{ if not .Error }}{{ .Icon }}{{ .Percentage }}{{ end }}{{ .Error }}\uf295 \ueb2d ",
           "type": "battery"
         },
         {
@@ -92,7 +88,7 @@
           "foreground": "#003544",
           "invert_powerline": true,
           "powerline_symbol": "\ue0b2",
-          "properties": {
+          "options": {
             "display_mode": "context",
             "fetch_virtual_env": true
           },
@@ -106,7 +102,7 @@
           "invert_powerline": true,
           "powerline_symbol": "\ue0b2",
           "style": "powerline",
-          "template": "<#fff> \uf64f </>{{ .CurrentDate | date .Format }} ",
+          "template": "<#fff> \ue641 </>{{ .CurrentDate | date .Format }} ",
           "type": "time"
         }
       ],
@@ -139,5 +135,5 @@
     "foreground": "#FFD700",
     "template": "{{if .Root}}\u26a1 {{end}}🚀 "
   },
-  "version": 2
+  "version": 4
 }

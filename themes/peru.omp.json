@@ -29,17 +29,12 @@
             "{{ if gt .Ahead 0 }}#16c60c{{ end }}",
             "{{ if gt .Behind 0 }}#f450de{{ end }}"
           ],
-          "properties": {
-            "fetch_status": true,
-            "fetch_upstream_icon": true
-          },
           "style": "plain",
-          "template": "{{ .UpstreamIcon }}{{ .HEAD }}{{ .BranchStatus }}{{ if .Working.Changed }} \uf044 {{ .Working.String }}{{ end }}{{ if and (.Working.Changed) (.Staging.Changed) }} |{{ end }}{{ if .Staging.Changed }} \uf046 {{ .Staging.String }}{{ end }}{{ if gt .StashCount 0 }} \uf692 {{ .StashCount }}{{ end }} ",
+          "template": "{{ .UpstreamIcon }}{{ .HEAD }}{{if .BranchStatus }} {{ .BranchStatus }}{{ end }}{{ if .Working.Changed }} \uf044 {{ .Working.String }}{{ end }}{{ if and (.Working.Changed) (.Staging.Changed) }} |{{ end }}{{ if .Staging.Changed }} \uf046 {{ .Staging.String }}{{ end }}{{ if gt .StashCount 0 }} \ueb4b {{ .StashCount }}{{ end }} ",
           "type": "git"
         }
       ],
-      "type": "prompt",
-      "vertical_offset": 1
+      "type": "prompt"
     },
     {
       "alignment": "right",
@@ -63,16 +58,16 @@
           "type": "java"
         },
         {
-          "properties": {
+          "options": {
             "always_enabled": true
           },
           "style": "plain",
-          "template": " {{ if gt .Code 0 }}<#ff0000>\uf00d \ue23a</>{{ else }}<#23d18b>\uf42e \ue23a</>{{ end }} ",
-          "type": "exit"
+          "template": " {{ if gt .Code 0 }}<#ff0000>\uf00d</>{{ else }}<#23d18b>\uf42e</>{{ end }} ",
+          "type": "status"
         },
         {
           "foreground": "#bab02a",
-          "properties": {
+          "options": {
             "threshold": 10
           },
           "style": "plain",
@@ -81,7 +76,7 @@
         },
         {
           "foreground": "#00C5C7",
-          "properties": {
+          "options": {
             "time_format": "15:04:05"
           },
           "style": "plain",
@@ -97,7 +92,7 @@
       "segments": [
         {
           "foreground": "#77E4F7",
-          "properties": {
+          "options": {
             "style": "full"
           },
           "style": "plain",
@@ -114,5 +109,5 @@
       "type": "prompt"
     }
   ],
-  "version": 2
+  "version": 4
 }

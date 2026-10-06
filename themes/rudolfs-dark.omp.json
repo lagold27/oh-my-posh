@@ -28,7 +28,7 @@
         {
           "background": "#256C9D",
           "foreground": "#ffffff",
-          "properties": {
+          "options": {
             "folder_icon": "\uf115",
             "folder_separator_icon": " \ue0b1 ",
             "max_depth": 2,
@@ -41,15 +41,23 @@
         {
           "background": "#256C9D",
           "foreground": "#ffffff",
-          "properties": {
-            "branch_max_length": 30,
-            "fetch_stash_count": false,
-            "fetch_status": true,
-            "fetch_upstream_icon": true
+          "options": {
+            "branch_template": "{{ trunc 30 .Branch }}"
           },
           "style": "plain",
-          "template": "[ {{ .UpstreamIcon }}{{ .HEAD }}{{ .BranchStatus }}{{ if .Working.Changed }} \uf044 {{ .Working.String }}{{ end }}{{ if and (.Working.Changed) (.Staging.Changed) }} |{{ end }}{{ if .Staging.Changed }} \uf046 {{ .Staging.String }}{{ end }}{{ if gt .StashCount 0 }} \uf692 {{ .StashCount }}{{ end }} ]",
+          "template": "[ {{ .UpstreamIcon }}{{ .HEAD }}{{if .BranchStatus }} {{ .BranchStatus }}{{ end }}{{ if .Working.Changed }} \uf044 {{ .Working.String }}{{ end }}{{ if and (.Working.Changed) (.Staging.Changed) }} |{{ end }}{{ if .Staging.Changed }} \uf046 {{ .Staging.String }}{{ end }}{{ if gt .StashCount 0 }} \ueb4b {{ .StashCount }}{{ end }} ]",
           "type": "git"
+        },
+        {
+          "background": "#256C9D",
+          "foreground": "#ffffff",
+          "powerline_symbol": "\ue0b0",
+          "style": "plain",
+          "template": " \ue235 {{ if .Error }}{{ .Error }}{{ else }}{{ if .Venv }}{{ .Venv }} {{ end }}{{ .Full }}{{ end }} ",
+          "options": {
+            "text": "\ue0b0"
+          },
+          "type": "python"
         },
         {
           "foreground": "#256C9D",
@@ -61,5 +69,5 @@
       "type": "prompt"
     }
   ],
-  "version": 2
+  "version": 4
 }

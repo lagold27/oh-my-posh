@@ -1,13 +1,7 @@
 package segments
 
-import (
-	"encoding/json"
-	"oh-my-posh/environment"
-	"oh-my-posh/properties"
-)
-
 type Cds struct {
-	language
+	Language
 	HasDependency bool
 }
 
@@ -15,52 +9,50 @@ func (c *Cds) Template() string {
 	return languageTemplate
 }
 
-func (c *Cds) Init(props properties.Properties, env environment.Environment) {
-	c.language = language{
-		env:        env,
-		props:      props,
-		extensions: []string{".cdsrc.json", ".cdsrc-private.json", "*.cds"},
-		commands: []*cmd{
-			{
-				executable: "cds",
-				args:       []string{"--version"},
-				regex:      `@sap/cds: (?:(?P<version>((?P<major>[0-9]+).(?P<minor>[0-9]+).(?P<patch>[0-9]+))))`,
-			},
-		},
-		loadContext: c.loadContext,
-		inContext:   c.inContext,
-		displayMode: props.GetString(DisplayMode, DisplayModeContext),
-	}
-}
+const cdsToolName = "cds"
 
 func (c *Cds) Enabled() bool {
-	return c.language.Enabled()
+	c.loadSpec()
+
+	return c.Language.Enabled()
+}
+
+// Activation implements the activation gate; see Language.activation.
+func (c *Cds) Activation() Activation {
+	c.loadSpec()
+
+	return c.activation()
+}
+
+func (c *Cds) loadSpec() {
+	c.extensions = []string{".cdsrc.json", ".cdsrc-private.json", "*.cds"}
+	// Not marked versionCacheable: `cds --version` reports the @sap/cds
+	// dependency version resolved from the nearest node_modules (the exact
+	// line this regex targets), not just the cds-dk CLI's own version - so
+	// the same globally resolved binary reports a different version per
+	// project.
+	c.tooling = map[string]*cmd{
+		cdsToolName: {
+			executable: cdsToolName,
+			args:       []string{versionFlagArg},
+			regex:      `@sap/cds: ` + versionRegexPrefixed,
+		},
+	}
+	c.defaultTooling = []string{cdsToolName}
+	c.Language.loadContext = c.loadContext
+	c.Language.inContext = c.inContext
+	c.displayMode = c.options.String(DisplayMode, DisplayModeContext)
+	// the context callback reads package.json in the cwd for a @sap/cds
+	// dependency, so its presence gates the context part
+	c.contextFiles = []string{fileName}
 }
 
 func (c *Cds) loadContext() {
-	if !c.language.env.HasFiles("package.json") {
+	if !c.hasNodePackage("@sap/cds") {
 		return
 	}
 
-	content := c.language.env.FileContent("package.json")
-	objmap := map[string]json.RawMessage{}
-
-	if err := json.Unmarshal([]byte(content), &objmap); err != nil {
-		return
-	}
-
-	dependencies := map[string]json.RawMessage{}
-
-	if err := json.Unmarshal(objmap["dependencies"], &dependencies); err != nil {
-		return
-	}
-
-	for d := range dependencies {
-		if d == "@sap/cds" {
-			c.HasDependency = true
-			break
-		}
-	}
+	c.HasDependency = true
 }
 
 func (c *Cds) inContext() bool {

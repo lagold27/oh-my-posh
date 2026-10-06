@@ -12,13 +12,8 @@
         },
         {
           "foreground": "#b48ead",
-          "properties": {
-            "fetch_stash_count": true,
-            "fetch_status": true,
-            "fetch_upstream_icon": true
-          },
           "style": "plain",
-          "template": "<#5e81ac>--[</>{{ .HEAD }}{{ .BranchStatus }}{{ if .Working.Changed }}<#8fbcbb> \u25cf </>{{ end }}{{ if .Staging.Changed }}<#88c0d0> \u25cf </>{{ end }}<#5e81ac>]</>",
+          "template": "<#5e81ac>--[</>{{ .HEAD }}{{if .BranchStatus }} {{ .BranchStatus }}{{ end }}{{ if .Working.Changed }}<#8fbcbb> \u25cf </>{{ end }}{{ if .Staging.Changed }}<#88c0d0> \u25cf </>{{ end }}<#5e81ac>]</>",
           "type": "git"
         },
         {
@@ -42,8 +37,8 @@
         {
           "foreground": "#d8dee9",
           "style": "plain",
-          "template": "<#5e81ac>[x</>{{ .Meaning }}<#5e81ac>]</>",
-          "type": "exit"
+          "template": "<#5e81ac>[x</>{{ reason .Code }}<#5e81ac>]</>",
+          "type": "status"
         }
       ],
       "type": "prompt"
@@ -54,7 +49,7 @@
       "segments": [
         {
           "foreground": "#88c0d0",
-          "properties": {
+          "options": {
             "style": "full"
           },
           "style": "plain",
@@ -79,5 +74,5 @@
     }
   ],
   "final_space": true,
-  "version": 2
+  "version": 4
 }

@@ -8,6 +8,7 @@
         {
           "foreground": "#ffffff",
           "style": "plain",
+          "template": "  ",
           "type": "text"
         }
       ],
@@ -33,8 +34,8 @@
         {
           "background": "#0057b7",
           "foreground": "#FBD951",
-          "properties": {
-            "home_icon": "\uf7dd",
+          "options": {
+            "home_icon": "\ue617",
             "style": "mixed"
           },
           "style": "diamond",
@@ -46,13 +47,8 @@
           "background": "#0057b7",
           "foreground": "#ffd700",
           "powerline_symbol": "\ue0b0",
-          "properties": {
-            "fetch_stash_count": true,
-            "fetch_status": true,
-            "fetch_upstream_icon": true
-          },
           "style": "powerline",
-          "template": " \uf1d3  {{ .HEAD }} {{ .BranchStatus }}{{ if .Working.Changed }} \uf044 {{ .Working.String }}{{ end }}{{ if and (.Staging.Changed) (.Working.Changed) }} |{{ end }}{{ if .Staging.Changed }} \uf046 {{ .Staging.String }}{{ end }}{{ if gt .StashCount 0}}\uf692 {{ .StashCount }}{{ end }}{{ if gt .WorktreeCount 0}} \uf1bb {{ .WorktreeCount }}{{ end }} ",
+          "template": " \uf1d3  {{ .HEAD }}{{if .BranchStatus }} {{ .BranchStatus }}{{ end }}{{ if .Working.Changed }} \uf044 {{ .Working.String }}{{ end }}{{ if and (.Staging.Changed) (.Working.Changed) }} |{{ end }}{{ if .Staging.Changed }} \uf046 {{ .Staging.String }}{{ end }}{{ if gt .StashCount 0}}\ueb4b {{ .StashCount }}{{ end }}{{ if gt .WorktreeCount 0}} \uf1bb {{ .WorktreeCount }}{{ end }} ",
           "type": "git"
         },
         {
@@ -65,11 +61,6 @@
           ],
           "foreground": "#0057b7",
           "powerline_symbol": "\ue0b0",
-          "properties": {
-            "fetch_stash_count": false,
-            "fetch_status": false,
-            "fetch_upstream_icon": false
-          },
           "style": "powerline",
           "template": "\uf105",
           "type": "git"
@@ -78,6 +69,7 @@
           "leading_diamond": "<transparent,#49404f>\ue0b0</>",
           "style": "plain",
           "trailing_diamond": "\ue0b0",
+          "template": "  ",
           "type": "text"
         },
         {
@@ -87,13 +79,13 @@
             "{{ if gt .Code 0 }}#a30000{{ end }}"
           ],
           "leading_diamond": "<transparent,#ffd700>\ue0b0</>",
-          "properties": {
+          "options": {
             "always_enabled": true
           },
           "style": "diamond",
           "template": " {{ if gt .Code 0 }}\uf421 \uf119 {{ else }}\uf469 \u2665 {{ end }}",
           "trailing_diamond": "\ue0b0",
-          "type": "exit"
+          "type": "status"
         }
       ],
       "type": "prompt"
@@ -114,10 +106,10 @@
           "foreground": "#FBD951",
           "invert_powerline": true,
           "leading_diamond": "\ue0b2",
-          "properties": {
-            "charged_icon": "\uf583 ",
+          "options": {
+            "charged_icon": "\ueb2d ",
             "charging_icon": "\uf492 ",
-            "discharging_icon": "\uf58c "
+            "discharging_icon": "\uf243 "
           },
           "style": "diamond",
           "template": " {{ if not .Error }}{{ .Icon }}{{ .Percentage }}{{ end }}{{ .Error }}% <#111111>\ue0b2</>",
@@ -128,11 +120,11 @@
           "foreground": "#FBD951",
           "invert_powerline": true,
           "leading_diamond": "\ue0b2",
-          "properties": {
+          "options": {
             "always_enabled": true
           },
           "style": "diamond",
-          "template": " \uf608 {{ .FormattedMs }} <#111111>\ue0b2</>",
+          "template": " \ueba2 {{ .FormattedMs }} <#111111>\ue0b2</>",
           "type": "executiontime"
         },
         {
@@ -140,11 +132,11 @@
           "foreground": "#FBD951",
           "invert_powerline": true,
           "leading_diamond": "\ue0b2",
-          "properties": {
+          "options": {
             "time_format": "_2,15:04"
           },
           "style": "diamond",
-          "template": " \uf5ef {{ .CurrentDate | date .Format }}",
+          "template": " \uf073 {{ .CurrentDate | date .Format }}",
           "trailing_diamond": "\ue0b4",
           "type": "time"
         }
@@ -181,11 +173,8 @@
           "background": "#FBD951",
           "foreground": "#0057b7",
           "powerline_symbol": "\ue0b0",
-          "properties": {
-            "display_host": false
-          },
           "style": "powerline",
-          "template": " {{ if .SSHSession }}\uf817 {{ end }}{{ .UserName }} ",
+          "template": " {{ if .SSHSession }}\ueba9 {{ end }}{{ .UserName }} ",
           "type": "session"
         }
       ],
@@ -224,5 +213,5 @@
   ],
   "console_title_template": "{{if .Root}}Admin: {{end}} {{.Folder}}",
   "final_space": true,
-  "version": 2
+  "version": 4
 }

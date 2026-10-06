@@ -17,7 +17,7 @@
         },
         {
           "foreground": "#7B68EE",
-          "properties": {
+          "options": {
             "style": "agnoster_short"
           },
           "style": "plain",
@@ -26,9 +26,8 @@
         },
         {
           "foreground": "#48D1CC",
-          "properties": {
-            "branch_icon": "",
-            "fetch_upstream_icon": false
+          "options": {
+            "branch_icon": ""
           },
           "style": "plain",
           "template": "HEAD:{{ .UpstreamIcon }}{{ .HEAD }} ",
@@ -39,16 +38,16 @@
           "foreground_templates": [
             "{{ if gt .Code 0 }}#E84855{{ end }}"
           ],
-          "properties": {
+          "options": {
             "always_enabled": true
           },
           "style": "plain",
           "template": "<#66CDAA>\u276f</><#76EEC6>\u276f</><foreground>\u276f</> ",
-          "type": "exit"
+          "type": "status"
         }
       ],
       "type": "prompt"
     }
   ],
-  "version": 2
+  "version": 4
 }

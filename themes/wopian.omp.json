@@ -12,7 +12,7 @@
         },
         {
           "foreground": "cyan",
-          "properties": {
+          "options": {
             "style": "full"
           },
           "style": "plain",
@@ -33,10 +33,9 @@
       "segments": [
         {
           "foreground": "#68a063",
-          "properties": {
+          "options": {
             "display_mode": "files",
             "fetch_package_manager": true,
-            "fetch_version": true,
             "npm_icon": "/npm",
             "yarn_icon": "/yarn"
           },
@@ -46,9 +45,8 @@
         },
         {
           "foreground": "#4063D8",
-          "properties": {
-            "display_mode": "files",
-            "fetch_version": true
+          "options": {
+            "display_mode": "files"
           },
           "style": "plain",
           "template": " {{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }}",
@@ -56,9 +54,8 @@
         },
         {
           "foreground": "#DE3F24",
-          "properties": {
-            "display_mode": "files",
-            "fetch_version": true
+          "options": {
+            "display_mode": "files"
           },
           "style": "plain",
           "template": " {{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }}",
@@ -66,7 +63,7 @@
         },
         {
           "foreground": "#FED142",
-          "properties": {
+          "options": {
             "display_mode": "context",
             "fetch_virtual_env": false
           },
@@ -92,16 +89,16 @@
           "foreground_templates": [
             "{{ if gt .Code 0 }}red{{ end }}"
           ],
-          "properties": {
+          "options": {
             "always_enabled": true
           },
           "style": "powerline",
           "template": "\u279c ",
-          "type": "exit"
+          "type": "status"
         }
       ],
       "type": "prompt"
     }
   ],
-  "version": 2
+  "version": 4
 }

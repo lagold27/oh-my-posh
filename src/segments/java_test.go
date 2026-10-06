@@ -2,9 +2,9 @@ package segments
 
 import (
 	"fmt"
-	"oh-my-posh/mock"
-	"oh-my-posh/properties"
 	"testing"
+
+	"github.com/jandedobbeleer/oh-my-posh/src/runtime"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -20,7 +20,7 @@ func TestJava(t *testing.T) {
 		{
 			Case:           "Zulu LTS",
 			ExpectedString: "11.0.13",
-			Version:        "OpenJDK 64-Bit Server VM (11.0.13+8-LTS) for windows-amd64 JRE (Zulu11.52+13-CA) (11.0.13+8-LTS), built on Oct 7 2021 16:00:23 by \"zulu_re\" with MS VC++ 15.9 (VS2017)", // nolint:lll
+			Version:        "OpenJDK 64-Bit Server VM (11.0.13+8-LTS) for windows-amd64 JRE (Zulu11.52+13-CA) (11.0.13+8-LTS), built on Oct 7 2021 16:00:23 by \"zulu_re\" with MS VC++ 15.9 (VS2017)", //nolint:lll
 		},
 		{
 			Case:           "OpenJDK macOS",
@@ -55,22 +55,25 @@ func TestJava(t *testing.T) {
 		},
 	}
 	for _, tc := range cases {
-		env := new(mock.MockedEnvironment)
-		env.On("HasCommand", "java").Return(true)
-		env.On("RunCommand", "java", []string{"-Xinternalversion"}).Return(tc.Version, nil)
-		env.On("HasFiles", "pom.xml").Return(true)
-		env.On("Pwd").Return("/usr/home/project")
-		env.On("Home").Return("/usr/home")
+		params := &mockedLanguageParams{
+			cmd:           "java",
+			versionParam:  "-Xinternalversion",
+			versionOutput: tc.Version,
+			extension:     "pom.xml",
+		}
+		env, props := getMockedLanguageEnv(params)
+		mockVersionCacheable(env, params.cmd)
+
 		if tc.JavaHomeEnabled {
 			env.On("Getenv", "JAVA_HOME").Return("/usr/java")
 			env.On("HasCommand", "/usr/java/bin/java").Return(true)
-			env.On("RunCommand", "/usr/java/bin/java", []string{"-Xinternalversion"}).Return(tc.JavaHomeVersion, nil)
+			env.On("RunCommandWithEnv", "/usr/java/bin/java", []string(nil), []string{"-Xinternalversion"}).Return(tc.JavaHomeVersion, nil)
+			env.On("CommandPath", "/usr/java/bin/java").Return("/usr/java/bin/java")
+			env.On("StatFile", "/usr/java/bin/java").Return(runtime.FileStat{ModTime: 1, Size: 1}, nil)
 		} else {
 			env.On("Getenv", "JAVA_HOME").Return("")
 		}
-		props := properties.Map{
-			properties.FetchVersion: true,
-		}
+
 		j := &Java{}
 		j.Init(props, env)
 		assert.True(t, j.Enabled(), fmt.Sprintf("Failed in case: %s", tc.Case))

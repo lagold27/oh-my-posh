@@ -1,9 +1,10 @@
 package template
 
 import (
-	"oh-my-posh/environment"
-	"oh-my-posh/mock"
 	"testing"
+
+	"github.com/jandedobbeleer/oh-my-posh/src/cache"
+	"github.com/jandedobbeleer/oh-my-posh/src/runtime/mock"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -20,21 +21,19 @@ func TestGlob(t *testing.T) {
 		{Case: "multiple glob", Expected: "NOK", Template: `{{ if or (glob "package.json") (glob "node_modules") }}OK{{ else }}NOK{{ end }}`},
 	}
 
-	env := &mock.MockedEnvironment{}
-	env.On("TemplateCache").Return(&environment.TemplateCache{
-		Env: make(map[string]string),
-	})
+	env := &mock.Environment{}
+	env.On("Shell").Return("foo")
+
+	Cache = new(cache.Template)
+	Init(env, nil, nil)
+
 	for _, tc := range cases {
-		tmpl := &Text{
-			Template: tc.Template,
-			Context:  nil,
-			Env:      env,
-		}
-		text, err := tmpl.Render()
+		text, err := RenderTrusted(tc.Template, nil)
 		if tc.ShouldError {
 			assert.Error(t, err)
 			continue
 		}
+
 		assert.Equal(t, tc.Expected, text, tc.Case)
 	}
 }

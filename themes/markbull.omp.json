@@ -15,14 +15,14 @@
           "foreground": "#1d1626",
           "powerline_symbol": "\ue0b0",
           "style": "powerline",
-          "template": " \uf26c  {{ if .SSHSession }}\uf817  {{ end }}{{ .UserName }}@{{ .HostName }} ",
+          "template": " \uf26c  {{ if .SSHSession }}\ueba9  {{ end }}{{ .UserName }}@{{ .HostName }} ",
           "type": "session"
         },
         {
           "background": "#C678DD",
           "foreground": "#fffef9",
           "powerline_symbol": "\ue0b0",
-          "properties": {
+          "options": {
             "windows": "\uf17a"
           },
           "style": "powerline",
@@ -33,7 +33,7 @@
           "background": "#C678DD",
           "foreground": "#fffef9",
           "powerline_symbol": "\ue0b0",
-          "properties": {
+          "options": {
             "style": "full"
           },
           "style": "powerline",
@@ -51,31 +51,27 @@
           ],
           "foreground": "#100e23",
           "powerline_symbol": "\ue0b0",
-          "properties": {
-            "azure_devops_icon": "\ufd03 ",
+          "options": {
+            "azure_devops_icon": "\uebd8 ",
             "bitbucket_icon": "\uf171 ",
-            "branch_gone_icon": "\uf68e ",
+            "branch_gone_icon": "\uebcc ",
             "branch_icon": "\ue0a0 ",
-            "branch_identical_icon": "\uf690 ",
+            "branch_identical_icon": "\uf4c4 ",
             "commit_icon": "\uf417 ",
-            "fetch_stash_count": true,
-            "fetch_status": true,
-            "fetch_upstream_icon": true,
-            "fetch_worktree_count": true,
             "git_icon": "\uf1d3 ",
             "github_icon": "\uf408 ",
             "gitlab_icon": "\uf296 ",
             "tag_icon": "\uf412 "
           },
           "style": "powerline",
-          "template": " {{ if( .UpstreamIcon ) }}{{ url .UpstreamIcon .UpstreamURL }} {{ end }}{{ .HEAD }}{{ .BranchStatus }}{{ if .Working.Changed }} <#ed1941>\uf044 {{.Working.String}}</>{{ end }}{{ if and (.Working.Changed) (.Staging.Changed) }} |{{ end }}{{ if .Staging.Changed }} <#225a1f>\uf046 {{.Staging.String}}</>{{ end }}{{ if gt .StashCount 0 }}  \uf692 {{.StashCount}}{{ end }}{{ if gt .WorktreeCount 0 }}{{if .IsWorkTree}}<#1d953f>{{ end }}  \uf1bb {{if .IsWorkTree}}</>{{ end }}{{.WorktreeCount}}{{ end }} ",
+          "template": " {{ if( .UpstreamIcon ) }}{{ url .UpstreamIcon .UpstreamURL }} {{ end }}{{ .HEAD }}{{if .BranchStatus }} {{ .BranchStatus }}{{ end }}{{ if .Working.Changed }} <#ed1941>\uf044 {{.Working.String}}</>{{ end }}{{ if and (.Working.Changed) (.Staging.Changed) }} |{{ end }}{{ if .Staging.Changed }} <#225a1f>\uf046 {{.Staging.String}}</>{{ end }}{{ if gt .StashCount 0 }}  \ueb4b {{.StashCount}}{{ end }}{{ if gt .WorktreeCount 0 }}{{if .IsWorkTree}}<#1d953f>{{ end }}  \uf1bb {{if .IsWorkTree}}</>{{ end }}{{.WorktreeCount}}{{ end }} ",
           "type": "git"
         },
         {
           "background": "#33a3dc",
           "foreground": "#fffef9",
           "powerline_symbol": "\ue0b0",
-          "properties": {
+          "options": {
             "always_enabled": true
           },
           "style": "powerline",
@@ -87,8 +83,8 @@
           "foreground": "#fffef9",
           "powerline_symbol": "\ue0b0",
           "style": "powerline",
-          "template": " \uf12a >>{{ .Meaning }} ",
-          "type": "exit"
+          "template": " \uf12a >>{{ reason .Code }} ",
+          "type": "status"
         }
       ],
       "type": "prompt"
@@ -115,6 +111,5 @@
   ],
   "console_title_template": "{{if .Root}}\u26a1 {{end}}{{.Folder}}",
   "final_space": true,
-  "osc99": true,
-  "version": 2
+  "version": 4
 }

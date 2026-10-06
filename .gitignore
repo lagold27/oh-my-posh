@@ -1,3 +1,17 @@
+# APM
+apm_modules/
+
+# Others
+
+.specs/
+.fleet/
+src/test/umbraco/obj/
+src/keys
+*.prof
+packages/msix/Microsoft.Trusted.Signing.Client
+.claude/*
+!.claude/settings.json
+.styles
 
 # Created by https://www.toptal.com/developers/gitignore/api/node,go,visualstudiocode
 # Edit at https://www.toptal.com/developers/gitignore?templates=node,go,visualstudiocode
@@ -9,6 +23,9 @@
 *.dll
 *.so
 *.dylib
+
+# Windows asset files
+/src/rsrc_windows_*.syso
 
 # Test binary, built with `go test -c`
 *.test
@@ -159,6 +176,7 @@ Output/
 
 # go releaser
 /src/dist
+/src/gomodcache
 
 
 # Created by https://www.toptal.com/developers/gitignore/api/windows,linux,macos
@@ -228,6 +246,7 @@ $RECYCLE.BIN/
 *.cab
 *.msi
 *.msix
+*.appinstaller
 *.msm
 *.msp
 
@@ -243,3 +262,4 @@ cosign.key
 *.omp.json.bak
 
 __debug_bin
+src/src

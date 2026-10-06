@@ -3,11 +3,9 @@ package segments
 import (
 	"errors"
 	"fmt"
-	"oh-my-posh/environment"
-	"oh-my-posh/mock"
-	"oh-my-posh/properties"
 	"testing"
 
+	"github.com/jandedobbeleer/oh-my-posh/src/runtime"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -55,35 +53,33 @@ func TestHaskell(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		env := new(mock.MockedEnvironment)
+		params := &mockedLanguageParams{
+			cmd:           "ghc",
+			versionParam:  "--numeric-version",
+			versionOutput: tc.GhcVersion,
+			extension:     "*.hs",
+		}
+		env, props := getMockedLanguageEnv(params)
+		mockVersionCacheable(env, params.cmd)
+
 		if tc.StackGhcMode == "always" || (tc.StackGhcMode == "package" && tc.InStackPackage) {
 			env.On("HasCommand", "stack").Return(true)
-			env.On("RunCommand", "stack", []string{"ghc", "--", "--numeric-version"}).Return(tc.StackGhcVersion, nil)
-		} else {
-			env.On("HasCommand", "ghc").Return(true)
-			env.On("RunCommand", "ghc", []string{"--numeric-version"}).Return(tc.GhcVersion, nil)
+			env.On("RunCommandWithEnv", "stack", []string(nil), []string{"ghc", "--", "--numeric-version"}).Return(tc.StackGhcVersion, nil)
 		}
-		fileInfo := &environment.FileInfo{
+
+		fileInfo := &runtime.FileInfo{
 			Path:         "../stack.yaml",
 			ParentFolder: "./",
 			IsDir:        false,
 		}
+
 		if tc.InStackPackage {
 			var err error
-			env.On("HasParentFilePath", "stack.yaml").Return(fileInfo, err)
+			env.On("HasParentFilePath", "stack.yaml", false).Return(fileInfo, err)
 		} else {
-			env.On("HasParentFilePath", "stack.yaml").Return(fileInfo, errors.New("no match"))
+			env.On("HasParentFilePath", "stack.yaml", false).Return(fileInfo, errors.New("no match"))
 		}
-		env.On("HasFiles", "*.hs").Return(true)
-		env.On("Pwd").Return("/usr/home/project")
-		env.On("Home").Return("/usr/home")
-		env.On("TemplateCache").Return(&environment.TemplateCache{
-			Env: make(map[string]string),
-		})
 
-		props := properties.Map{
-			properties.FetchVersion: true,
-		}
 		props[StackGhcMode] = tc.StackGhcMode
 
 		h := &Haskell{}

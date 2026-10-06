@@ -2,22 +2,23 @@ package segments
 
 import (
 	"errors"
-	"oh-my-posh/mock"
-	"oh-my-posh/properties"
 	"testing"
+
+	"github.com/jandedobbeleer/oh-my-posh/src/runtime/mock"
+	"github.com/jandedobbeleer/oh-my-posh/src/segments/options"
 
 	"github.com/alecthomas/assert"
 )
 
 func TestNbgv(t *testing.T) {
 	cases := []struct {
+		Error           error
 		Case            string
-		ExpectedEnabled bool
 		ExpectedString  string
 		Response        string
-		HasNbgv         bool
 		Template        string
-		Error           error
+		ExpectedEnabled bool
+		HasNbgv         bool
 	}{
 		{Case: "nbgv not installed"},
 		{Case: "nbgv installed, no version file", HasNbgv: true, Response: "{ \"VersionFileFound\": false }"},
@@ -59,14 +60,15 @@ func TestNbgv(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		env := new(mock.MockedEnvironment)
+		env := new(mock.Environment)
 		env.On("HasCommand", "nbgv").Return(tc.HasNbgv)
 		env.On("RunCommand", "nbgv", []string{"get-version", "--format=json"}).Return(tc.Response, tc.Error)
-		nbgv := &Nbgv{
-			env:   env,
-			props: properties.Map{},
-		}
+
+		nbgv := &Nbgv{}
+		nbgv.Init(options.Map{}, env)
+
 		enabled := nbgv.Enabled()
+
 		assert.Equal(t, tc.ExpectedEnabled, enabled, tc.Case)
 		if tc.Template == "" {
 			tc.Template = nbgv.Template()

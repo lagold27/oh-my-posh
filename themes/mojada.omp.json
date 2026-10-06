@@ -9,7 +9,7 @@
           "background": "#fbfbfb",
           "foreground": "#0077c2",
           "leading_diamond": "\ue0b6",
-          "properties": {
+          "options": {
             "arch": "\uf303",
             "debian": "\uf306",
             "fedora": "\uf30a",
@@ -28,9 +28,6 @@
           "background": "#fbfbfb",
           "foreground": "#0077c2",
           "powerline_symbol": "\ue0b0",
-          "properties": {
-            "display_host": true
-          },
           "style": "powerline",
           "template": "{{ .UserName }}<#000000>@</><#e06c75>{{ .HostName }}</> ",
           "type": "session"
@@ -47,7 +44,7 @@
           "background": "#0077c2",
           "foreground": "#ffffff",
           "powerline_symbol": "\ue0b0",
-          "properties": {
+          "options": {
             "folder_separator_icon": "/",
             "home_icon": "~",
             "max_depth": 2,
@@ -67,13 +64,8 @@
           ],
           "foreground": "#193549",
           "powerline_symbol": "\ue0b0",
-          "properties": {
-            "fetch_stash_count": true,
-            "fetch_status": true,
-            "fetch_upstream_icon": true
-          },
           "style": "powerline",
-          "template": " {{ .UpstreamIcon }}{{ .HEAD }}{{ .BranchStatus }}{{ if .Staging.Changed }} \uf046 {{ .Staging.String }}{{ end }}{{ if and (.Working.Changed) (.Staging.Changed) }} |{{ end }}{{ if .Working.Changed }} \uf044 {{ .Working.String }}{{ end }}{{ if gt .StashCount 0 }} \uf692 {{ .StashCount }}{{ end }} ",
+          "template": " {{ .UpstreamIcon }}{{ .HEAD }}{{if .BranchStatus }} {{ .BranchStatus }}{{ end }}{{ if .Staging.Changed }} \uf046 {{ .Staging.String }}{{ end }}{{ if and (.Working.Changed) (.Staging.Changed) }} |{{ end }}{{ if .Working.Changed }} \uf044 {{ .Working.String }}{{ end }}{{ if gt .StashCount 0 }} \ueb4b {{ .StashCount }}{{ end }} ",
           "type": "git"
         },
         {
@@ -89,16 +81,16 @@
       "segments": [
         {
           "foreground": "#ffffff",
-          "properties": {
+          "options": {
             "always_enabled": true
           },
           "style": "plain",
-          "template": " {{ if gt .Code 0 }}\uf659{{ else }}\uf633{{ end }} ",
-          "type": "exit"
+          "template": " {{ if gt .Code 0 }}\udb80\udc30{{ else }}\uf4a7{{ end }} ",
+          "type": "status"
         },
         {
           "foreground": "#ffffff",
-          "properties": {
+          "options": {
             "always_enabled": true
           },
           "style": "plain",
@@ -115,10 +107,10 @@
           "foreground": "#ffffff",
           "invert_powerline": true,
           "powerline_symbol": "\ue0b2",
-          "properties": {
-            "charged_icon": "\uf583 ",
-            "charging_icon": "\uf588 ",
-            "discharging_icon": "\uf57d "
+          "options": {
+            "charged_icon": "\ueb2d ",
+            "charging_icon": "\uf241 ",
+            "discharging_icon": "\uf242 "
           },
           "style": "powerline",
           "template": " {{ if not .Error }}{{ .Icon }}{{ .Percentage }}{{ end }}{{ .Error }}% ",
@@ -128,7 +120,7 @@
           "background": "#61afef",
           "foreground": "#ffffff",
           "invert_powerline": true,
-          "properties": {
+          "options": {
             "time_format": "15:04 (Mon)"
           },
           "style": "diamond",
@@ -142,5 +134,5 @@
   ],
   "console_title_template": "{{.UserName}}@{{.HostName}} : {{.Folder}}",
   "final_space": true,
-  "version": 2
+  "version": 4
 }

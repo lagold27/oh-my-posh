@@ -12,7 +12,7 @@
         },
         {
           "foreground": "cyan",
-          "properties": {
+          "options": {
             "style": "folder"
           },
           "style": "plain",
@@ -21,12 +21,11 @@
         },
         {
           "foreground": "#ff94df",
-          "properties": {
-            "branch_icon": " <#ff94df><b>\ue0a0 </b></>",
-            "fetch_stash_count": true
+          "options": {
+            "branch_icon": " <#ff94df><b>\ue0a0 </b></>"
           },
           "style": "plain",
-          "template": "<#ffffff>on</> {{ .HEAD }}{{ if gt .StashCount 0 }} \uf692 {{ .StashCount }}{{ end }} ",
+          "template": "<#ffffff>on</> {{ .HEAD }}{{ if gt .StashCount 0 }} \ueb4b {{ .StashCount }}{{ end }} ",
           "type": "git"
         }
       ],
@@ -47,5 +46,5 @@
     }
   ],
   "final_space": true,
-  "version": 2
+  "version": 4
 }

@@ -1,60 +1,56 @@
 package segments
 
 import (
-	"oh-my-posh/environment"
-	"oh-my-posh/mock"
-	"oh-my-posh/properties"
 	"testing"
+
+	"github.com/jandedobbeleer/oh-my-posh/src/runtime"
+	"github.com/jandedobbeleer/oh-my-posh/src/runtime/mock"
+	"github.com/jandedobbeleer/oh-my-posh/src/segments/options"
+	"github.com/jandedobbeleer/oh-my-posh/src/template"
 
 	"github.com/stretchr/testify/assert"
 )
 
 func TestPlasticEnabledNotFound(t *testing.T) {
-	env := new(mock.MockedEnvironment)
+	env := new(mock.Environment)
 	env.On("HasCommand", "cm").Return(false)
 	env.On("GOOS").Return("")
 	env.On("IsWsl").Return(false)
-	p := &Plastic{
-		scm: scm{
-			env:   env,
-			props: properties.Map{},
-		},
-	}
+
+	p := &Plastic{}
+	p.Init(options.Map{}, env)
+
 	assert.False(t, p.Enabled())
 }
 
 func TestPlasticEnabledInWorkspaceDirectory(t *testing.T) {
-	env := new(mock.MockedEnvironment)
+	env := new(mock.Environment)
 	env.On("HasCommand", "cm").Return(true)
 	env.On("GOOS").Return("")
 	env.On("IsWsl").Return(false)
 	env.On("FileContent", "/dir/.plastic//plastic.selector").Return("")
-	fileInfo := &environment.FileInfo{
+	fileInfo := &runtime.FileInfo{
 		Path:         "/dir/hello",
 		ParentFolder: "/dir",
 		IsDir:        true,
 	}
-	env.On("HasParentFilePath", ".plastic").Return(fileInfo, nil)
-	p := &Plastic{
-		scm: scm{
-			env:   env,
-			props: properties.Map{},
-		},
-	}
+	env.On("HasParentFilePath", ".plastic", false).Return(fileInfo, nil)
+
+	p := &Plastic{}
+	p.Init(options.Map{}, env)
+
 	assert.True(t, p.Enabled())
 	assert.Equal(t, fileInfo.ParentFolder, p.plasticWorkspaceFolder)
 }
 
 func setupCmStatusEnv(status, headStatus string) *Plastic {
-	env := new(mock.MockedEnvironment)
+	env := new(mock.Environment)
 	env.On("RunCommand", "cm", []string{"status", "--all", "--machinereadable"}).Return(status, nil)
 	env.On("RunCommand", "cm", []string{"status", "--head", "--machinereadable"}).Return(headStatus, nil)
-	p := &Plastic{
-		scm: scm{
-			env:   env,
-			props: properties.Map{},
-		},
-	}
+
+	p := &Plastic{}
+	p.Init(options.Map{}, env)
+
 	return p
 }
 
@@ -68,9 +64,9 @@ func TestPlasticGetCmOutputForCommand(t *testing.T) {
 func TestPlasticStatusBehind(t *testing.T) {
 	cases := []struct {
 		Case     string
-		Expected bool
 		Status   string
 		Head     string
+		Expected bool
 	}{
 		{
 			Case:     "Not behind",
@@ -96,8 +92,8 @@ func TestPlasticStatusBehind(t *testing.T) {
 func TestPlasticStatusChanged(t *testing.T) {
 	cases := []struct {
 		Case     string
-		Expected bool
 		Status   string
+		Expected bool
 	}{
 		{
 			Case:     "No changes",
@@ -163,8 +159,8 @@ func TestPlasticStatusCounts(t *testing.T) {
 func TestPlasticMergePending(t *testing.T) {
 	cases := []struct {
 		Case     string
-		Expected bool
 		Status   string
+		Expected bool
 	}{
 		{
 			Case:     "No pending merge",
@@ -187,10 +183,10 @@ func TestPlasticMergePending(t *testing.T) {
 func TestPlasticParseIntPattern(t *testing.T) {
 	cases := []struct {
 		Case     string
-		Expected int
 		Text     string
 		Pattern  string
 		Name     string
+		Expected int
 		Default  int
 	}{
 		{
@@ -270,33 +266,31 @@ func TestPlasticParseSmartbranchSelector(t *testing.T) {
 func TestPlasticStatus(t *testing.T) {
 	p := &Plastic{
 		Status: &PlasticStatus{
-			ScmStatus: ScmStatus{
-				Added:    1,
-				Modified: 2,
-				Deleted:  3,
-				Moved:    4,
-				Unmerged: 5,
-			},
+			Added:    1,
+			Modified: 2,
+			Deleted:  3,
+			Moved:    4,
+			Unmerged: 5,
 		},
 	}
-	status := p.Status.String()
+	status := p.Status.String().String()
 	expected := "+1 ~2 -3 >4 x5"
 	assert.Equal(t, expected, status)
 }
 
 func TestPlasticTemplateString(t *testing.T) {
 	cases := []struct {
+		Plastic  *Plastic
 		Case     string
 		Expected string
 		Template string
-		Plastic  *Plastic
 	}{
 		{
 			Case:     "Default template",
 			Expected: "/main",
 			Template: "{{ .Selector }}",
 			Plastic: &Plastic{
-				Selector: "/main",
+				Selector: template.RawMarkup("/main"),
 				Behind:   false,
 			},
 		},
@@ -305,14 +299,12 @@ func TestPlasticTemplateString(t *testing.T) {
 			Expected: "/main \uF044 +2 ~3 -1 >4",
 			Template: "{{ .Selector }}{{ if .Status.Changed }} \uF044 {{ .Status.String }}{{ end }}",
 			Plastic: &Plastic{
-				Selector: "/main",
+				Selector: template.RawMarkup("/main"),
 				Status: &PlasticStatus{
-					ScmStatus: ScmStatus{
-						Added:    2,
-						Modified: 3,
-						Deleted:  1,
-						Moved:    4,
-					},
+					Added:    2,
+					Modified: 3,
+					Deleted:  1,
+					Moved:    4,
 				},
 			},
 		},
@@ -321,19 +313,32 @@ func TestPlasticTemplateString(t *testing.T) {
 			Expected: "/main",
 			Template: "{{ .Selector }}{{ if .Status.Changed }} \uF044 {{ .Status.String }}{{ end }}",
 			Plastic: &Plastic{
-				Selector: "/main",
+				Selector: template.RawMarkup("/main"),
 				Status:   &PlasticStatus{},
 			},
 		},
 	}
 
 	for _, tc := range cases {
-		props := properties.Map{
-			FetchStatus: true,
-		}
-		tc.Plastic.props = props
-		env := new(mock.MockedEnvironment)
+		tc.Plastic.options = options.Map{}
+		// the status probe is derived from template references now
+		tc.Plastic.SetReferencedFields(template.RefSet{Fields: plasticStatusFields, Analyzable: true})
+		env := new(mock.Environment)
 		tc.Plastic.env = env
 		assert.Equal(t, tc.Expected, renderTemplate(env, tc.Template, tc.Plastic), tc.Case)
 	}
+}
+
+func TestPlasticInitializesBaseSegment(t *testing.T) {
+	env := new(mock.Environment)
+
+	p := &Plastic{}
+	p.Init(options.Map{}, env)
+
+	// Plastic used to shadow Base.Init without setting Base.Segment, making
+	// SetText panic with a nil pointer dereference once the segment rendered.
+	p.SetText("main")
+	p.SetIndex(1)
+
+	assert.Equal(t, "main", p.Text().String())
 }

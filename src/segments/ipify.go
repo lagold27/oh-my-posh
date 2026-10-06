@@ -1,18 +1,39 @@
 package segments
 
 import (
-	"oh-my-posh/environment"
-	"oh-my-posh/properties"
+	"net"
+
+	"github.com/jandedobbeleer/oh-my-posh/src/cache"
+	"github.com/jandedobbeleer/oh-my-posh/src/runtime/http"
+	"github.com/jandedobbeleer/oh-my-posh/src/segments/options"
 )
 
+type ipData struct {
+	IP string `json:"ip"`
+}
+
+type IPAPI interface {
+	Get() (*ipData, error)
+}
+
+type ipAPI struct {
+	http.Request
+}
+
+func (i *ipAPI) Get() (*ipData, error) {
+	url := "https://api.ipify.org?format=json"
+	return i.Do[*ipData](url, nil)
+}
+
 type IPify struct {
-	props properties.Properties
-	env   environment.Environment
-	IP    string
+	Base
+
+	api IPAPI
+	IP  string
 }
 
 const (
-	IpifyURL properties.Property = "url"
+	OFFLINE = "OFFLINE"
 )
 
 func (i *IPify) Template() string {
@@ -20,47 +41,52 @@ func (i *IPify) Template() string {
 }
 
 func (i *IPify) Enabled() bool {
+	const key = "IP"
+
+	if ip, ok := cache.Device.Get[string](key); ok {
+		i.IP = ip
+		return true
+	}
+
+	i.initAPI()
+
 	ip, err := i.getResult()
 	if err != nil {
 		return false
 	}
+
 	i.IP = ip
+
+	duration := i.options.String(options.CacheDuration, string(cache.ONEDAY))
+	cache.Device.Set(key, i.IP, cache.Duration(duration))
 
 	return true
 }
 
 func (i *IPify) getResult() (string, error) {
-	cacheTimeout := i.props.GetInt(CacheTimeout, DefaultCacheTimeout)
-
-	url := i.props.GetString(IpifyURL, "https://api.ipify.org")
-
-	if cacheTimeout > 0 {
-		// check if data stored in cache
-		val, found := i.env.Cache().Get(url)
-		// we got something from te cache
-		if found {
-			return val, nil
-		}
+	data, err := i.api.Get()
+	if dnsErr, OK := err.(*net.DNSError); OK && dnsErr.IsNotFound {
+		return OFFLINE, nil
 	}
 
-	httpTimeout := i.props.GetInt(HTTPTimeout, DefaultHTTPTimeout)
-
-	body, err := i.env.HTTPRequest(url, httpTimeout)
 	if err != nil {
 		return "", err
 	}
 
-	// convert the body to a string
-	response := string(body)
-
-	if cacheTimeout > 0 {
-		// persist public ip in cache
-		i.env.Cache().Set(url, response, cacheTimeout)
-	}
-	return response, nil
+	return data.IP, err
 }
 
-func (i *IPify) Init(props properties.Properties, env environment.Environment) {
-	i.props = props
-	i.env = env
+func (i *IPify) initAPI() {
+	if i.api != nil {
+		return
+	}
+
+	request := &http.Request{
+		Env:         i.env,
+		HTTPTimeout: i.options.Int(options.HTTPTimeout, options.DefaultHTTPTimeout),
+	}
+
+	i.api = &ipAPI{
+		Request: *request,
+	}
 }

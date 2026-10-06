@@ -1,15 +1,17 @@
-# See here for image contents: https://github.com/microsoft/vscode-dev-containers/tree/v0.177.0/containers/go/.devcontainer/base.Dockerfile
+# See here for image contents: https://github.com/devcontainers/images/blob/main/src/go/.devcontainer/Dockerfile
 
-# [Choice] Go version (use -bullseye variants on local arm64/Apple Silicon): 1, 1.16, 1.17, 1-bullseye, 1.16-bullseye, 1.17-bullseye, 1-buster, 1.16-buster, 1.17-buster
-ARG VARIANT=1-bullseye
-FROM mcr.microsoft.com/vscode/devcontainers/go:0-${VARIANT}
+# [Choice] Go version: 1, 1.25, 1.26, 1-trixie, 1.25-trixie, 1.26-trixie, 1-bookworm, 1.25-bookworm, 1.26-bookworm, 1-bullseye, 1.25-bullseye, 1.26-bullseye
+ARG VARIANT=1-trixie
+FROM mcr.microsoft.com/vscode/devcontainers/go:${VARIANT}
 
-# [Choice] Node.js version: none, lts/*, 16, 14, 12, 10
+# [Choice] Node.js version: none, lts/*, 24, 22, 20
 ARG NODE_VERSION="none"
 RUN if [ "${NODE_VERSION}" != "none" ]; then su vscode -c "umask 0002 && . /usr/local/share/nvm/nvm.sh && nvm install ${NODE_VERSION} 2>&1"; fi
 
 # Install powershell
-ARG PS_VERSION="7.2.1"
+ARG PS_VERSION="7.6.0"
+# powershell-7.6.0-linux-x64.tar.gz
+# powershell-7.6.0-linux-arm64.tar.gz
 RUN ARCH="$(dpkg --print-architecture)"; \
     if [ "${ARCH}" = "amd64" ]; then \
         PS_BIN="v$PS_VERSION/powershell-$PS_VERSION-linux-x64.tar.gz"; \
@@ -21,27 +23,21 @@ RUN ARCH="$(dpkg --print-architecture)"; \
     wget https://github.com/PowerShell/PowerShell/releases/download/$PS_BIN -O pwsh.tar.gz; \
     mkdir /usr/local/pwsh && \
     tar Cxvfz /usr/local/pwsh pwsh.tar.gz && \
-    rm pwsh.tar.gz
+    rm pwsh.tar.gz && \
+    chmod +x /usr/local/pwsh/pwsh
 
 ENV PATH=$PATH:/usr/local/pwsh
 
-RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
+RUN echo 'deb http://download.opensuse.org/repositories/shells:/fish:/release:/4/Debian_13/ /' | tee /etc/apt/sources.list.d/shells:fish:release:4.list; \
+    curl -fsSL https://download.opensuse.org/repositories/shells:fish:release:4/Debian_13/Release.key | gpg --dearmor | tee /etc/apt/trusted.gpg.d/shells_fish_release_4.gpg > /dev/null; \
+    apt-get update && export DEBIAN_FRONTEND=noninteractive \
     && apt-get install -y --no-install-recommends \
     fish \
     tmux \
+    fzf \
     && apt-get clean
 
 ARG USERNAME=vscode
-
-# Download the oh-my-posh binary
-RUN mkdir /home/${USERNAME}/bin; \
-    wget https://github.com/JanDeDobbeleer/oh-my-posh/releases/latest/download/posh-linux-$(dpkg --print-architecture) -O /home/${USERNAME}/bin/oh-my-posh; \
-    chmod +x /home/${USERNAME}/bin/oh-my-posh; \
-    chown ${USERNAME}: /home/${USERNAME}/bin;
-
-# Download the fzf binary
-RUN wget https://github.com/junegunn/fzf/releases/download/0.29.0/fzf-0.29.0-linux_$(dpkg --print-architecture).tar.gz -O /home/${USERNAME}/bin/fzf; \
-    chmod +x /home/${USERNAME}/bin/fzf;
 
 # NOTE: devcontainers are Linux-only at this time but when
 # Windows or Darwin is supported someone will need to improve
@@ -54,10 +50,7 @@ RUN pwsh -Command Install-Module posh-git -Scope AllUsers -Force; \
     pwsh -Command Install-Module Terminal-Icons -Scope AllUsers -Force;
 
 # add the oh-my-posh path to the PATH variable
-ENV PATH "$PATH:/home/${USERNAME}/bin"
-
-# Can be used to override the devcontainer prompt default theme:
-ENV POSH_THEME="/workspaces/oh-my-posh/themes/jandedobbeleer.omp.json"
+ENV PATH="$PATH:/home/${USERNAME}/bin"
 
 # Deploy oh-my-posh prompt to Powershell:
 COPY Microsoft.PowerShell_profile.ps1 /home/${USERNAME}/.config/powershell/Microsoft.PowerShell_profile.ps1
@@ -71,10 +64,10 @@ RUN chmod 777 -R /home/${USERNAME}/.config
 
 # Override vscode's own Bash prompt with oh-my-posh:
 RUN sed -i 's/^__bash_prompt$/#&/' /home/${USERNAME}/.bashrc && \
-    echo "eval \"\$(oh-my-posh init bash --config $POSH_THEME)\"" >> /home/${USERNAME}/.bashrc
+    echo "eval \"\$(oh-my-posh init bash)\"" >> /home/${USERNAME}/.bashrc
 
 # Override vscode's own ZSH prompt with oh-my-posh:
-RUN echo "eval \"\$(oh-my-posh init zsh --config $POSH_THEME)\"" >> /home/${USERNAME}/.zshrc
+RUN echo "eval \"\$(oh-my-posh init zsh)\"" >> /home/${USERNAME}/.zshrc
 
 # Set container timezone:
 ARG TZ="UTC"

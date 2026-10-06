@@ -4,34 +4,29 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"oh-my-posh/environment"
-	"oh-my-posh/properties"
+	"math"
+	"net/url"
+
+	"github.com/jandedobbeleer/oh-my-posh/src/log"
+	"github.com/jandedobbeleer/oh-my-posh/src/segments/options"
 )
 
 type Owm struct {
-	props properties.Properties
-	env   environment.Environment
+	Base
 
-	Temperature float64
 	Weather     string
 	URL         string
 	units       string
 	UnitIcon    string
+	Temperature int
 }
 
 const (
-	// APIKey openweathermap api key
-	APIKey properties.Property = "apikey"
-	// Location openweathermap location
-	Location properties.Property = "location"
-	// Units openweathermap units
-	Units properties.Property = "units"
-	// CacheTimeout cache timeout
-	CacheTimeout properties.Property = "cache_timeout"
-	// CacheKeyResponse key used when caching the response
-	CacheKeyResponse string = "owm_response"
-	// CacheKeyURL key used when caching the url responsible for the response
-	CacheKeyURL string = "owm_url"
+	APIKey           options.Option = "api_key"
+	Location         options.Option = "location"
+	Units            options.Option = "units"
+	CacheKeyResponse string         = "owm_response"
+	CacheKeyURL      string         = "owm_url"
 )
 
 type weather struct {
@@ -50,7 +45,13 @@ type owmDataResponse struct {
 
 func (d *Owm) Enabled() bool {
 	err := d.setStatus()
-	return err == nil
+
+	if err != nil {
+		log.Error(err)
+		return false
+	}
+
+	return true
 }
 
 func (d *Owm) Template() string {
@@ -58,67 +59,63 @@ func (d *Owm) Template() string {
 }
 
 func (d *Owm) getResult() (*owmDataResponse, error) {
-	cacheTimeout := d.props.GetInt(CacheTimeout, DefaultCacheTimeout)
 	response := new(owmDataResponse)
-	if cacheTimeout > 0 {
-		// check if data stored in cache
-		val, found := d.env.Cache().Get(CacheKeyResponse)
-		// we got something from te cache
-		if found {
-			err := json.Unmarshal([]byte(val), response)
-			if err != nil {
-				return nil, err
-			}
-			d.URL, _ = d.env.Cache().Get(CacheKeyURL)
-			return response, nil
-		}
+
+	apikey := d.options.Template(APIKey, "", d)
+	if apikey == "" {
+		return nil, errors.New("no api key found")
 	}
 
-	apikey := d.props.GetString(APIKey, ".")
-	location := d.props.GetString(Location, "De Bilt,NL")
-	units := d.props.GetString(Units, "standard")
-	httpTimeout := d.props.GetInt(HTTPTimeout, DefaultHTTPTimeout)
-	d.URL = fmt.Sprintf("http://api.openweathermap.org/data/2.5/weather?q=%s&units=%s&appid=%s", location, units, apikey)
+	location := d.options.Template(Location, "", d)
+	if location == "" {
+		return nil, errors.New("no location found")
+	}
 
-	body, err := d.env.HTTPRequest(d.URL, httpTimeout)
+	location = url.QueryEscape(location)
+
+	units := d.options.String(Units, "standard")
+	httpTimeout := d.options.Int(options.HTTPTimeout, options.DefaultHTTPTimeout)
+
+	d.URL = fmt.Sprintf("https://api.openweathermap.org/data/2.5/weather?q=%s&units=%s&appid=%s", location, units, apikey)
+
+	body, err := d.env.HTTPRequest(d.URL, nil, httpTimeout)
 	if err != nil {
 		return new(owmDataResponse), err
 	}
+
 	err = json.Unmarshal(body, &response)
 	if err != nil {
 		return new(owmDataResponse), err
 	}
 
-	if cacheTimeout > 0 {
-		// persist new forecasts in cache
-		d.env.Cache().Set(CacheKeyResponse, string(body), cacheTimeout)
-		d.env.Cache().Set(CacheKeyURL, d.URL, cacheTimeout)
-	}
 	return response, nil
 }
 
 func (d *Owm) setStatus() error {
-	units := d.props.GetString(Units, "standard")
+	units := d.options.String(Units, "standard")
+
 	q, err := d.getResult()
 	if err != nil {
 		return err
 	}
+
 	if len(q.Data) == 0 {
-		return errors.New("No data found")
+		return errors.New("no data found")
 	}
+
 	id := q.Data[0].TypeID
 
-	d.Temperature = q.temperature.Value
+	d.Temperature = int(math.Round(q.Value))
 	icon := ""
 	switch id {
 	case "01n":
-		fallthrough
+		icon = "\ue32b"
 	case "01d":
-		icon = "\ufa98"
+		icon = "\ue30d"
 	case "02n":
-		fallthrough
+		icon = "\ue37e"
 	case "02d":
-		icon = "\ufa94"
+		icon = "\ue302"
 	case "03n":
 		fallthrough
 	case "03d":
@@ -130,15 +127,15 @@ func (d *Owm) setStatus() error {
 	case "09n":
 		fallthrough
 	case "09d":
-		icon = "\ufa95"
+		icon = "\ue319"
 	case "10n":
-		fallthrough
+		icon = "\ue325"
 	case "10d":
 		icon = "\ue308"
 	case "11n":
-		fallthrough
+		icon = "\ue32a"
 	case "11d":
-		icon = "\ue31d"
+		icon = "\ue30f"
 	case "13n":
 		fallthrough
 	case "13d":
@@ -159,12 +156,7 @@ func (d *Owm) setStatus() error {
 	case "":
 		fallthrough
 	case "standard":
-		d.UnitIcon = "°K" // \ufa05"
+		d.UnitIcon = "°K" // <b>K</b>"
 	}
 	return nil
-}
-
-func (d *Owm) Init(props properties.Properties, env environment.Environment) {
-	d.props = props
-	d.env = env
 }

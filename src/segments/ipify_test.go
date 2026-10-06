@@ -2,68 +2,72 @@ package segments
 
 import (
 	"errors"
-	"oh-my-posh/mock"
-	"oh-my-posh/properties"
+	"net"
 	"testing"
 
+	"github.com/jandedobbeleer/oh-my-posh/src/cache"
+	"github.com/jandedobbeleer/oh-my-posh/src/runtime/mock"
+	"github.com/jandedobbeleer/oh-my-posh/src/segments/options"
+
 	"github.com/stretchr/testify/assert"
+	testify_ "github.com/stretchr/testify/mock"
 )
 
-const (
-	IPIFYAPIURL = "https://api.ipify.org"
-)
+type mockedipAPI struct {
+	testify_.Mock
+}
+
+func (s *mockedipAPI) Get() (*ipData, error) {
+	args := s.Called()
+	return args.Get(0).(*ipData), args.Error(1)
+}
 
 func TestIpifySegment(t *testing.T) {
 	cases := []struct {
 		Case            string
-		Response        string
+		IPDate          *ipData
+		Error           error
 		ExpectedString  string
 		ExpectedEnabled bool
-		Template        string
-		Error           error
 	}{
 		{
-			Case:            "IPv4",
-			Response:        `127.0.0.1`,
+			Case:            "IP data",
+			IPDate:          &ipData{IP: "127.0.0.1"},
 			ExpectedString:  "127.0.0.1",
 			ExpectedEnabled: true,
 		},
 		{
-			Case:            "IPv6 (with template)",
-			Response:        `0000:aaaa:1111:bbbb:2222:cccc:3333:dddd`,
-			ExpectedString:  "Ext. IP: 0000:aaaa:1111:bbbb:2222:cccc:3333:dddd",
-			ExpectedEnabled: true,
-			Template:        "Ext. IP: {{.IP}}",
+			Case:            "Error",
+			Error:           errors.New("network is unreachable"),
+			ExpectedEnabled: false,
 		},
 		{
-			Case:            "Error in retrieving data",
-			Response:        "nonsense",
-			Error:           errors.New("Something went wrong"),
-			ExpectedEnabled: false,
+			Case:            "Offline",
+			ExpectedString:  OFFLINE,
+			Error:           &net.DNSError{IsNotFound: true},
+			ExpectedEnabled: true,
 		},
 	}
 
 	for _, tc := range cases {
-		env := &mock.MockedEnvironment{}
-		props := properties.Map{
-			CacheTimeout: 0,
-		}
-		env.On("HTTPRequest", IPIFYAPIURL).Return([]byte(tc.Response), tc.Error)
+		api := &mockedipAPI{}
+		api.On("Get").Return(tc.IPDate, tc.Error)
 
 		ipify := &IPify{
-			props: props,
-			env:   env,
+			api:     api,
+			env:     &mock.Environment{},
+			options: options.Map{},
 		}
 
 		enabled := ipify.Enabled()
 		assert.Equal(t, tc.ExpectedEnabled, enabled, tc.Case)
+
+		cache.Device.DeleteAll()
+
 		if !enabled {
 			continue
 		}
 
-		if tc.Template == "" {
-			tc.Template = ipify.Template()
-		}
-		assert.Equal(t, tc.ExpectedString, renderTemplate(env, tc.Template, ipify), tc.Case)
+		assert.Equal(t, tc.ExpectedString, renderTemplate(&mock.Environment{}, ipify.Template(), ipify), tc.Case)
 	}
 }
