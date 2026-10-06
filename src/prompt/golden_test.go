@@ -320,7 +320,7 @@ func contextWindow(b []byte, offset int) []byte {
 // comparing.
 func TestGoldenThemes(t *testing.T) {
 	themePaths := themeFiles(t)
-	require.Lenf(t, themePaths, 125, "expected 125 bundled themes (123 .omp.json + 2 .omp.yaml); "+
+	require.Lenf(t, themePaths, 126, "expected 126 bundled themes (124 .omp.json + 2 .omp.yaml); "+
 		"if this changed intentionally, update the fixture/golden set for the new/removed theme(s)")
 
 	type manifestEntry struct {

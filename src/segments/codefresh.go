@@ -1,46 +1,41 @@
 package segments
 
 import (
-	"gopkg.in/yaml.v3"
-	"oh-my-posh/environment"
-	"oh-my-posh/properties"
 	"path/filepath"
+	"strings"
+
+	yaml "go.yaml.in/yaml/v3"
 )
 
 type Codefresh struct {
-	props   properties.Properties
-	env     environment.Environment
+	Base
+
 	Context string
 }
 
 type CodefreshConfig struct {
-	CurrentContext string `yaml:"current-context"`
+	// A string target would coerce numeric and boolean YAML scalars.
+	CurrentContext yaml.Node `yaml:"current-context"`
 }
 
 func (cf *Codefresh) Template() string {
 	return " {{ .Context }} "
 }
 
-func (cf *Codefresh) Init(props properties.Properties, env environment.Environment) {
-	cf.props = props
-	cf.env = env
-}
-
 func (cf *Codefresh) Enabled() bool {
+	cf.Context = ""
 	cfconfig := filepath.Join(cf.env.Home(), ".cfconfig")
 	content := cf.env.FileContent(cfconfig)
 	var config CodefreshConfig
 	err := yaml.Unmarshal([]byte(content), &config)
-	if err != nil {
-		cf.setError("Codefresh Error")
+	if err != nil || config.CurrentContext.Tag != "!!str" {
 		return false
 	}
-	cf.Context = config.CurrentContext
-	return true
-}
 
-func (cf *Codefresh) setError(message string) {
-	if len(cf.Context) == 0 {
-		cf.Context = message
+	if strings.TrimSpace(config.CurrentContext.Value) == "" {
+		return false
 	}
+
+	cf.Context = config.CurrentContext.Value
+	return true
 }

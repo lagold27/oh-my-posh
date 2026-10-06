@@ -759,6 +759,12 @@
       },
       "enabled": true
     },
+    "codefresh": {
+      "data": {
+        "Context": "contoso-prod"
+      },
+      "enabled": true
+    },
     "connection": {
       "data": {
         "Name": "Contoso-5G",
@@ -2201,6 +2207,7 @@
     },
     "pulumi": {
       "data": {
+        "Context": "file://contoso-dev",
         "Name": "oh-my-posh-infra",
         "Segment": {
           "Index": 73,

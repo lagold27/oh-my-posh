@@ -425,6 +425,11 @@ func (term *Terminal) FileContent(file string) string {
 	}
 
 	fileContent := string(content)
+	switch filepath.Base(file) {
+	case ".cfconfig", "credentials.json":
+		log.Debug("[REDACTED]")
+		return fileContent
+	}
 	log.Debug(fileContent)
 
 	return fileContent

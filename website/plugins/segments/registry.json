@@ -84,6 +84,10 @@
     "docId": "cmake"
   },
   {
+    "type": "codefresh",
+    "docId": "codefresh"
+  },
+  {
     "type": "connection",
     "docId": "connection"
   },

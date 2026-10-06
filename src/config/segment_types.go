@@ -77,6 +77,8 @@ const (
 	CLOJURE SegmentType = "clojure"
 	// CMAKE writes the active cmake version
 	CMAKE SegmentType = "cmake"
+
+	CODEFRESH SegmentType = "codefresh"
 	// CONNECTION writes a connection's information
 	CONNECTION SegmentType = "connection"
 	// COPILOT writes GitHub Copilot usage statistics

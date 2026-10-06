@@ -49,6 +49,7 @@ func init() {
 	gob.Register(&segments.Claude{})
 	gob.Register(&segments.ClaudeData{})
 	gob.Register(&segments.Cmake{})
+	gob.Register(&segments.Codefresh{})
 	gob.Register(&segments.ConfiguredLanguage{})
 	gob.Register(&segments.Connection{})
 	gob.Register(&segments.Deno{})
@@ -167,6 +168,7 @@ var Segments = map[SegmentType]func() SegmentWriter{
 	CLAUDE:          func() SegmentWriter { return &segments.Claude{} },
 	CLOJURE:         func() SegmentWriter { return segments.NewLanguage(string(CLOJURE)) },
 	CMAKE:           func() SegmentWriter { return &segments.Cmake{} },
+	CODEFRESH:       func() SegmentWriter { return &segments.Codefresh{} },
 	CONNECTION:      func() SegmentWriter { return &segments.Connection{} },
 	COPILOT:         func() SegmentWriter { return &segments.Copilot{} },
 	COPILOTCLI:      func() SegmentWriter { return &segments.CopilotCLI{} },

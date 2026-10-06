@@ -220,14 +220,14 @@ function loadSegments(docsRoot, registryByDocId) {
     const groupDir = path.join(docsRoot, group);
     const files = fs
       .readdirSync(groupDir, { withFileTypes: true })
-      .filter((entry) => entry.isFile() && entry.name.endsWith('.mdx'))
+      .filter((entry) => entry.isFile() && ['.md', '.mdx'].includes(path.extname(entry.name)))
       .map((entry) => entry.name)
       .filter((name) => name !== 'overview.mdx')
       .sort();
 
     for (const fileName of files) {
       const filePath = path.join(groupDir, fileName);
-      const id = fileName.slice(0, -'.mdx'.length);
+      const id = path.basename(fileName, path.extname(fileName));
 
       if (seenDocIds.has(id)) {
         throw new Error(`oh-my-posh-segments plugin: duplicate doc id "${id}" (${filePath}).`);

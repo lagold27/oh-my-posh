@@ -36,9 +36,6 @@
 		  "powerline_symbol": "\ue0b0",         
           "style": "powerline",
           "template": " \uf5f7 {{.Context}} ",
-		  "properties": {
-            "always_enabled": true
-          },
           "trailing_diamond": "\ue0b0",
           "type": "codefresh"
 		},
@@ -51,8 +48,8 @@
 		  "powerline_symbol": "\ue0b0",         
           "style": "powerline",
           "template": " \ue710 {{ if contains \"dev\" .Context }}dev {{ else }}prod {{ end }} ",
-		  "properties": {
-            "always_enabled": true
+		  "options": {
+            "context_only": true
           },
           "trailing_diamond": "\ue0b0",
           "type": "pulumi"
