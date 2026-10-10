@@ -68,6 +68,7 @@ is a template that prints its whole context (`{{ . }}`) without naming any field
 | `mapped_branches`     |      `object`       |         | custom glyph/text for specific branches. You can use `*` at the end as a wildcard character for matching                                                                                                                                                                                                                              |
 | `branch_template`     |      `string`       |         | a [template][templates] to format that branch name. You can use `{{ .Branch }}` as reference to the original branch name and `{{ .Upstream }}` as reference to the upstream name                                                                                                                                                      |
 | `disable_with_jj`     |      `boolean`      | `false` | disable the git segment in case of a [Jujutsu] collocated repository                                                                                                                                                                                                                                                                  |
+| `resolve_rebase_target` |      `boolean`      | `true`  | during a merge-style rebase, when set to `true`, Oh My Posh runs `git name-rev` to display a ref name for the target commit (can slow down prompts in repos with many refs). Set to `false` to display the target's seven-character commit hash instead, without running `git name-rev`. Affects `.HEAD` and `.Rebase.Onto`                      |
 
 ### Icons
 
@@ -130,7 +131,7 @@ is a template that prints its whole context (`{{ . }}`) without naming any field
 | `.PushBehind`     | `int`               | commits behind of push remote                                                                                                    |
 | `.PushAhead`      | `int`               | commits ahead of push remote                                                                                                     |
 | `.BranchStatus`   | `string`            | the current branch context (ahead/behind string representation)                                                                  |
-| `.Upstream`       | `string`            | the upstream name (remote)                                                                                                       |
+| `.Upstream`       | `string`            | the upstream reference, e.g. `origin/main`; empty when no upstream is configured                                                 |
 | `.UpstreamGone`   | `boolean`           | whether the upstream is gone (no remote)                                                                                         |
 | `.UpstreamIcon`   | `string`            | the upstream icon (based on the icons above)                                                                                     |
 | `.UpstreamURL`    | `string`            | the upstream URL for use in [hyperlinks][hyperlinks] in templates: `{{ url .UpstreamIcon .UpstreamURL }}`                        |

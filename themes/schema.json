@@ -2039,7 +2039,20 @@
           },
           "then": {
             "title": "GCP Segment",
-            "description": "Display the currently active GCP project, region and account."
+            "description": "Display the currently active GCP project, region and account.",
+            "properties": {
+              "options": {
+                "properties": {
+                  "fetch_auth_status": {
+                    "type": "boolean",
+                    "title": "Fetch Auth Status",
+                    "description": "Populate .Authorized and .TokenExpiresAt by reading the cached access token's expiry from gcloud's access_tokens.db.",
+                    "default": false
+                  }
+                },
+                "unevaluatedProperties": false
+              }
+            }
           }
         },
         {
@@ -2061,6 +2074,12 @@
                     "title": "Use the Native Status Engine",
                     "description": "Fetch the status information using the built-in engine instead of the git CLI (experimental, falls back to git automatically).",
                     "default": false
+                  },
+                  "resolve_rebase_target": {
+                    "type": "boolean",
+                    "title": "Resolve Rebase Target",
+                    "description": "Resolve the rebase target commit to a ref name. Set to false to display its short commit hash without running git name-rev.",
+                    "default": true
                   },
                   "disable_with_jj": {
                     "type": "boolean",
@@ -3703,6 +3722,7 @@
                       "agnoster_full",
                       "agnoster_short",
                       "agnoster_left",
+                      "agnoster_git",
                       "short",
                       "full",
                       "folder",
