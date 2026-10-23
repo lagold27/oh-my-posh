@@ -20,6 +20,18 @@
     "WSL": false
   },
   "segments": {
+    "codefresh": {
+      "data": {
+        "Context": "contoso-prod"
+      },
+      "enabled": true
+    },
+    "pulumi": {
+      "data": {
+        "Context": "file://contoso-dev"
+      },
+      "enabled": true
+    },
     "angular": {
       "data": {
         "BuildMetadata": "",

@@ -427,6 +427,7 @@
             "claude",
             "clojure",
             "cmake",
+            "codefresh",
             "copilot",
             "copilot_cli",
             "connection",
@@ -1453,6 +1454,19 @@
                 "unevaluatedProperties": false
               }
             }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "codefresh"
+              }
+            }
+          },
+          "then": {
+            "title": "Codefresh Segment",
+            "description": "Display the active Codefresh context from the local .cfconfig file."
           }
         },
         {
@@ -4121,7 +4135,7 @@
           },
           "then": {
             "title": "Pulumi Segment",
-            "description": "Display the currently active Pulumi logged-in user, url and stack.",
+            "description": "Display the Pulumi project, stack, user and backend URL, or the active local context.",
             "properties": {
               "options": {
                 "properties": {
@@ -4135,6 +4149,12 @@
                     "type": "boolean",
                     "title": "Fetch About",
                     "description": "Fetch the URL and user for the current stack.",
+                    "default": false
+                  },
+                  "context_only": {
+                    "type": "boolean",
+                    "title": "Context Only",
+                    "description": "Read the current local context without requiring the Pulumi CLI or a project.",
                     "default": false
                   }
                 },

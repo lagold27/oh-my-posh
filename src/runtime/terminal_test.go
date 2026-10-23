@@ -1,10 +1,73 @@
 package runtime
 
 import (
+	"os"
+	"os/exec"
+	"path/filepath"
 	"testing"
 
+	"github.com/jandedobbeleer/oh-my-posh/src/log"
+
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
+
+func TestFileContentLogging(t *testing.T) {
+	if os.Getenv("OMP_FILE_CONTENT_LOGGING_TEST") != "1" {
+		executable, err := os.Executable()
+		require.NoError(t, err)
+		// The logger has no reset API; isolate its global state from other tests.
+		cmd := exec.Command(executable, "-test.run=^TestFileContentLogging$")
+		cmd.Env = append(os.Environ(), "OMP_FILE_CONTENT_LOGGING_TEST=1")
+		output, err := cmd.CombinedOutput()
+		require.NoError(t, err, "%s", output)
+		return
+	}
+
+	dir, err := os.MkdirTemp(".", "filecontent-test-")
+	require.NoError(t, err)
+	t.Cleanup(func() { assert.NoError(t, os.RemoveAll(dir)) })
+	dir, err = filepath.Abs(dir)
+	require.NoError(t, err)
+	log.Enable(true)
+	term := &Terminal{}
+
+	cases := []struct {
+		File      string
+		Sensitive bool
+	}{
+		{File: ".cfconfig", Sensitive: true},
+		{File: "credentials.json", Sensitive: true},
+		{File: filepath.Join("unrelated", "credentials.json"), Sensitive: true},
+		{File: "config.json"},
+		{File: ".cfconfig.backup"},
+		{File: "not-credentials.json"},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.File, func(t *testing.T) {
+			file := filepath.Join(dir, tc.File)
+			require.NoError(t, os.MkdirAll(filepath.Dir(file), 0700))
+			const content = "synthetic-file-content-sentinel\nunchanged second line"
+			require.NoError(t, os.WriteFile(file, []byte(content), 0600))
+
+			start := len(log.String())
+			assert.Equal(t, content, term.FileContent(file))
+			output := log.String()[start:]
+			assert.Contains(t, output, file)
+			if tc.Sensitive {
+				assert.NotContains(t, output, content)
+				assert.NotContains(t, output, "synthetic-file-content-sentinel")
+				assert.NotContains(t, output, "unchanged second line")
+				assert.Contains(t, output, "[REDACTED]")
+				return
+			}
+			assert.Contains(t, output, "synthetic-file-content-sentinel")
+			assert.Contains(t, output, "unchanged second line")
+			assert.NotContains(t, output, "[REDACTED]")
+		})
+	}
+}
 
 func TestNormalHostName(t *testing.T) {
 	hostName := "hello"

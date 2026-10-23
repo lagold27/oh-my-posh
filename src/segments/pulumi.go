@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"path/filepath"
+	"strings"
 
 	"github.com/jandedobbeleer/oh-my-posh/src/log"
 	"github.com/jandedobbeleer/oh-my-posh/src/runtime/path"
@@ -15,8 +16,9 @@ import (
 )
 
 const (
-	FetchStack options.Option = "fetch_stack"
-	FetchAbout options.Option = "fetch_about"
+	FetchStack  options.Option = "fetch_stack"
+	FetchAbout  options.Option = "fetch_about"
+	ContextOnly options.Option = "context_only"
 
 	JSON string = "json"
 	YAML string = "yaml"
@@ -28,8 +30,9 @@ const (
 type Pulumi struct {
 	Base
 
-	Stack string
-	Name  string
+	Stack   string
+	Name    string
+	Context string
 
 	workspaceSHA1 string
 
@@ -50,10 +53,19 @@ type pulumiWorkSpaceFileSpec struct {
 }
 
 func (p *Pulumi) Template() string {
+	if p.options != nil && p.options.Bool(ContextOnly, false) {
+		return " {{ .Context }} "
+	}
+
 	return "\ue873 {{ .Stack }}{{if .User }} :: {{ .User }}@{{ end }}{{ if .URL }}{{ .URL }}{{ end }}"
 }
 
 func (p *Pulumi) Enabled() bool {
+	p.Context = ""
+	if p.options.Bool(ContextOnly, false) {
+		return p.getContext()
+	}
+
 	if !p.env.HasCommand("pulumi") {
 		return false
 	}
@@ -72,6 +84,27 @@ func (p *Pulumi) Enabled() bool {
 		p.getPulumiAbout()
 	}
 
+	return true
+}
+
+func (p *Pulumi) getContext() bool {
+	home := p.env.Getenv("PULUMI_HOME")
+	if home == "" {
+		home = filepath.Join(p.env.Home(), ".pulumi")
+	}
+
+	content := p.env.FileContent(filepath.Join(home, "credentials.json"))
+	var credentials struct {
+		Current string `json:"current"`
+	}
+	if err := json.Unmarshal([]byte(content), &credentials); err != nil {
+		return false
+	}
+	if strings.TrimSpace(credentials.Current) == "" {
+		return false
+	}
+
+	p.Context = credentials.Current
 	return true
 }
 

@@ -82,7 +82,7 @@ func callTemplateRecovered(t *testing.T, segmentType SegmentType, factory func()
 	return tmpl, panicked
 }
 
-// segmentDocIDs walks website/docs/segments/*/ for *.mdx files, skipping overview.mdx,
+// segmentDocIDs walks website/docs/segments/*/ for Markdown files, skipping overview.mdx,
 // and returns the set of doc ids (filename without extension).
 func segmentDocIDs(t *testing.T) map[string]bool {
 	t.Helper()
@@ -99,8 +99,12 @@ func segmentDocIDs(t *testing.T) map[string]bool {
 			continue
 		}
 
-		matches, err := filepath.Glob(filepath.Join(docsDir, group.Name(), "*.mdx"))
-		require.NoError(t, err)
+		var matches []string
+		for _, extension := range []string{".md", ".mdx"} {
+			files, err := filepath.Glob(filepath.Join(docsDir, group.Name(), "*"+extension))
+			require.NoError(t, err)
+			matches = append(matches, files...)
+		}
 
 		for _, match := range matches {
 			name := filepath.Base(match)
@@ -108,7 +112,7 @@ func segmentDocIDs(t *testing.T) map[string]bool {
 				continue
 			}
 
-			docIDs[strings.TrimSuffix(name, ".mdx")] = true
+			docIDs[strings.TrimSuffix(name, filepath.Ext(name))] = true
 		}
 	}
 

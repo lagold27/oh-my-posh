@@ -37,6 +37,10 @@
 ## Dev environment
 
 - The Go module root is `src/`, not the repo root - run all `go` commands from there.
+- Analyzer commands using `go run <tool>@<version>` select the tool's toolchain, not the project's
+  (verified 2026-10-06). With a Go 1.24 host, `x/tools@v0.51.0` builds under Go 1.26 and cannot
+  analyze this Go 1.27 module. Set `GOTOOLCHAIN=go1.27.0` for the analyzer invocation; otherwise
+  misleading standard-library and generic-method type errors appear.
 - On windows/arm64 dev machines `go test -race` is NOT supported. Concurrency-sensitive changes
   must rely on CI (amd64) for race detection.
 - Rendering hot-path benchmarks live in `src/template/bench_test.go`,
@@ -54,6 +58,11 @@
   activation line.
 
 ## Segments and panics
+
+- `runtime.Terminal.FileContent` redacts debug content for `.cfconfig` and every `credentials.json`
+  basename, while returning the original contents unchanged (verified 2026-10-06). File paths remain in trace logs.
+  Codefresh and Pulumi context-only parsing also avoid logging decoder errors, which can include credential values.
+  New credential filenames need the same protection before segments read them through the `Environment` API.
 
 - Segment `Execute` goroutines recover a panic since 2026-09-05 (`src/prompt/segments.go`): the
   segment logs the panic and renders as disabled, and the serve daemon survives. Template

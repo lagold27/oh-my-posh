@@ -207,3 +207,50 @@ description: A Console App
 		assert.Equal(t, tc.ExpectedString, got, tc.Case)
 	}
 }
+
+func TestPulumiContextOnly(t *testing.T) {
+	cases := []struct {
+		Case    string
+		Content string
+		Home    string
+		Context string
+	}{
+		{Case: "valid", Content: `{"current":"https://api.pulumi.com"}`, Context: "https://api.pulumi.com"},
+		{Case: "override", Home: "custom-pulumi", Content: `{"current":"file://dev"}`, Context: "file://dev"},
+		{Case: "absent"},
+		{Case: "empty", Content: ""},
+		{Case: "whitespace content", Content: " \n\t"},
+		{Case: "malformed", Content: `{"current":`},
+		{Case: "missing current", Content: `{}`},
+		{Case: "empty current", Content: `{"current":""}`},
+		{Case: "whitespace current", Content: `{"current":" \t "}`},
+		{Case: "null current", Content: `{"current":null}`},
+		{Case: "wrong type", Content: `{"current":123}`},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.Case, func(t *testing.T) {
+			env := new(mock.Environment)
+			env.On("Getenv", "PULUMI_HOME").Return(tc.Home)
+			home := tc.Home
+			if home == "" {
+				env.On("Home").Return("testhome")
+				home = filepath.Join("testhome", ".pulumi")
+			}
+			env.On("FileContent", filepath.Join(home, "credentials.json")).Return(tc.Content)
+			p := &Pulumi{Context: "stale"}
+			p.Init(options.Map{ContextOnly: true, FetchStack: true, FetchAbout: true}, env)
+
+			assert.Equal(t, tc.Context != "", p.Enabled())
+			assert.Equal(t, tc.Context, p.Context)
+			assert.Empty(t, p.Name)
+			assert.Empty(t, p.Stack)
+			assert.Empty(t, p.Backend)
+			if tc.Context != "" {
+				assert.Equal(t, " "+tc.Context+" ", renderTemplateNoTrimSpace(env, p.Template(), p))
+				assert.Equal(t, tc.Context, renderTemplate(env, "{{ .Context }}", p))
+			}
+			env.AssertExpectations(t)
+		})
+	}
+}

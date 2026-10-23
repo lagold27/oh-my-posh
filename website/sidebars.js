@@ -286,6 +286,7 @@ export default {
           },
           items: [
             "segments/system/battery",
+            "segments/system/codefresh",
             "segments/system/connection",
             "segments/system/executiontime",
             "segments/system/os",
