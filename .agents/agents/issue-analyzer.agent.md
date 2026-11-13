@@ -67,10 +67,9 @@ Use the table below as a starting point for which area of the codebase is likely
 | Caching              | `src/cache/`                                             |
 | Templates            | `src/template/`                                          |
 
-Invoke the `ast-grep` skill to locate symbols, function names, struct definitions, and call sites
-mentioned in the issue, instead of reading whole directories to find them. Use structural patterns
-to trace data flow and pin down the exact files and line numbers before opening anything for
-detailed reading.
+Search for the symbols, function names, struct definitions, and call sites mentioned in the
+issue, instead of reading whole directories to find them. Trace the data flow and pin down the
+exact files and line numbers before opening anything for detailed reading.
 
 Before investigating an area with known history (shell integration, terminal or pty behavior, WSL
 test harnesses, caching, segments, streaming, the serve daemon), read the matching topic file from
@@ -78,7 +77,7 @@ the `project-knowledge` skill. It records verified gotchas so you do not repeat 
 
 ### Step 4: Investigate like the code-changes triage path
 
-Follow the `code-changes` skill's `references/issue-triage.md` steps for the deep investigation:
+Follow step 1 of the `code-changes` skill for the deep investigation:
 
 1. Reproduce the reported behavior. When reproduction needs an environment you lack (OS, shell,
    font, hardware), say so and reason from the code instead, flagged as such.
@@ -98,9 +97,9 @@ in "Report format" below. Be specific: cite actual file paths and line numbers. 
 Whenever the analysis proposes a change, sketches an architecture, or includes a code snippet,
 prepare it like a change that will actually be reviewed, even though you will never submit it:
 
-1. Load the skill for every file type the proposal touches: `golang` for `.go` files, `powershell`
-   for `.ps1`/`.psm1`/`.psd1` files, `markdown` for `.md`/`.mdx` files, and both `segment-create`
-   and `segment-docs` when the proposal involves a new segment.
+1. Load the rules for every file type the proposal touches: the `golang` skill for `.go` files,
+   the AGENTS.md "Docs" rules for `.md`/`.mdx` files, and both `segment-create` and
+   `segment-docs` when the proposal involves a new segment.
 2. When the proposal contains a code snippet or a structural design (a new type, a new
    abstraction, a new package, or a cross-module change), invoke `code-reviewer` through the
    `agent` tool with the proposal text verbatim in fenced code blocks, the target file paths, and

@@ -40,15 +40,14 @@ Materialise each input read-only, and nothing else:
 
 Load these before reading the code, matched to the file types involved:
 
+- The AGENTS.md non-negotiables, always.
 - `golang` skill for every `.go` file.
-- `powershell` skill for every `.ps1`, `.psm1`, `.psd1` file.
-- `markdown` skill for every `.md`/`.mdx` file; add `segment-docs` when the file sits under
-  `website/docs/segments/`.
-- `architecture` skill, always, for its Object Calisthenics and Clean Code checklist.
+- The AGENTS.md "Docs" rules for every `.md`/`.mdx` file; add `segment-docs` when the file sits
+  under `website/docs/segments/`.
 - The matching `project-knowledge` topic file for the touched area, when one exists.
 
-Use the `ast-grep` skill to find call sites and similar existing implementations, so you can judge
-consistency with the rest of the codebase instead of reviewing the change in isolation.
+Search for call sites and similar existing implementations, so you can judge consistency with the
+rest of the codebase instead of reviewing the change in isolation.
 
 ## What you check
 
@@ -57,10 +56,8 @@ consistency with the rest of the codebase instead of reviewing the change in iso
 Go: `else` after a return, deep nesting, uppercase error strings, an OS or shell call
 made outside the `Environment` abstraction, new cache logic instead of reusing `src/cache/`, and the
 golang skill's test structure rules (table-driven tests, behavior over patch-shape assertions).
-PowerShell: approved verbs, PascalCase parameter names, pipeline output instead of formatted text,
-and `try`/`catch` error handling instead of unhandled exceptions. Markdown: heading levels (no H1,
-no skipped levels), fenced code blocks with a language tag, 120-character lines, and required
-frontmatter.
+Markdown: heading levels (no H1, no skipped levels), fenced code blocks with a language tag,
+120-character lines, and required frontmatter.
 
 ### Clean code
 
@@ -71,7 +68,7 @@ language.
 
 ### Architecture and SOLID
 
-Per the `architecture` skill checklist: single responsibility, extension through existing
+Single responsibility, extension through existing
 abstractions rather than modification of unrelated code, interfaces honoured as contracts, narrow
 interfaces over fat ones, dependency on `Environment` rather than concrete OS calls, the Law of
 Demeter, primitive obsession, Object Calisthenics, and hot-path cost in I/O and allocations per

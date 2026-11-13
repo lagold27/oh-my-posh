@@ -20,7 +20,7 @@ import Config from "@site/src/components/Config.js";
     powerline_symbol: "\uE0B0",
     foreground: "#ffffff",
     background: "#02303a",
-    template: " \uE70f {{ .Full }} ",
+    template: " \ue7f2 {{ .Full }} ",
   }}
 />
 
@@ -41,9 +41,7 @@ import Config from "@site/src/components/Config.js";
 
 :::note default template
 
-```template
-{{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }}
-```
+<Config data={{ template: " {{ if .Error }}{{ .Error }}{{ else }}{{ .Full }}{{ end }} " }} />
 
 :::
 

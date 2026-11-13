@@ -44,8 +44,8 @@ Load these before reading the diff:
 - The matching `project-knowledge` topic file for the touched area (shell scripts, cache,
   segments, terminal).
 
-Use `ast-grep` to find call sites and similar existing implementations so you can judge whether
-the change is consistent with the rest of the codebase.
+Search for call sites and similar existing implementations so you can judge whether the change is
+consistent with the rest of the codebase.
 
 Convention and architecture review is delegated to `code-reviewer`. Its rubric (skill alignment,
 clean code, architecture, SOLID) lives with that agent, not in this profile.
@@ -80,9 +80,8 @@ for new branches the diff introduces.
 
 ### Documentation and registration
 
-Confirm user-visible changes ship docs in the same PR. A new segment needs all five artifacts from
-AGENTS.md: source, test, MDX doc, sidebar and schema entries, and gob registration. Confirm
-`schema.json` is updated for config changes.
+Confirm user-visible changes ship docs in the same PR. A new segment needs every item in the
+`segment-create` skill's checklist. Confirm `themes/schema.json` is updated for config changes.
 
 ### Commits
 
